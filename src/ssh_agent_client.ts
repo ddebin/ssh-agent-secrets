@@ -1,0 +1,232 @@
+/**
+ * SSH Agent Client
+ * TypeScript rewrite of https://github.com/mcavage/node-ssh-agent
+ */
+
+import * as net from 'net'
+
+const enum Protocol {
+  SSH_AGENTC_REQUEST_RSA_IDENTITIES = 11,
+  SSH_AGENT_IDENTITIES_ANSWER = 12,
+  SSH2_AGENTC_SIGN_REQUEST = 13,
+  SSH2_AGENT_SIGN_RESPONSE = 14,
+  SSH_AGENT_FAILURE = 5,
+  SSH_AGENT_SUCCESS = 6,
+}
+
+interface SSHKey {
+  /** e.g. "ssh-rsa" */
+  type: string
+  /** Base64-encoded public key blob */
+  ssh_key: string
+  /** Human-readable comment, typically the key file path */
+  comment: string
+  /** Raw binary key blob — required by sign() */
+  _raw: Buffer
+}
+
+interface SSHSignature {
+  /** e.g. "ssh-rsa" */
+  type: string
+  /** Base64-encoded signature */
+  signature: string
+  /** Raw binary signature */
+  _raw: Buffer
+}
+
+interface SSHAgentClientOptions {
+  /** Socket operation timeout in milliseconds (default: 1000) */
+  timeout?: number
+}
+
+/** Read a length-prefixed string (uint32 BE length + bytes) from a buffer. */
+function readString(buffer: Buffer, offset: number): Buffer {
+  const len = buffer.readUInt32BE(offset)
+  return buffer.subarray(offset + 4, offset + 4 + len)
+}
+
+/** Write a length-prefixed string into `target` at `offset`, return next offset. */
+function writeString(target: Buffer, src: Buffer, offset: number): number {
+  target.writeUInt32BE(src.length, offset)
+  src.copy(target, offset + 4)
+  return offset + 4 + src.length
+}
+
+/**
+ * Write the 5-byte SSH agent frame header (4-byte length + 1-byte tag)
+ * into `request` and return the next write offset (5).
+ * The length field is the total buffer length minus the 4-byte length field itself.
+ */
+function writeHeader(request: Buffer, tag: number): number {
+  request.writeUInt32BE(request.length - 4, 0)
+  request.writeUInt8(tag, 4)
+  return 5
+}
+
+class SSHAgentClient {
+  private readonly timeout: number
+  private readonly sockFile: string
+
+  /**
+   * @param options - Optional configuration.
+   * @throws {Error} if SSH_AUTH_SOCK is not set.
+   */
+  constructor(options: SSHAgentClientOptions = {}) {
+    this.timeout = options.timeout ?? 1000
+
+    const sockFile = process.env.SSH_AUTH_SOCK
+    if (!sockFile) {
+      throw new Error('SSH_AUTH_SOCK was not found in your environment')
+    }
+    this.sockFile = sockFile
+  }
+
+  // -------------------------------------------------------------------------
+  // Public API
+  // -------------------------------------------------------------------------
+
+  /**
+   * List all SSH identities available from the agent.
+   *
+   * Resolves with an array of key objects:
+   * ```ts
+   * { type: "ssh-rsa", ssh_key: "<base64>", comment: "~/.ssh/id_rsa", _raw: Buffer }
+   * ```
+   */
+  requestIdentities(): Promise<SSHKey[]> {
+    const buildRequest = (): Buffer => {
+      const req = Buffer.allocUnsafe(5) // 4-byte length + 1-byte tag
+      writeHeader(req, Protocol.SSH_AGENTC_REQUEST_RSA_IDENTITIES)
+      return req
+    }
+
+    const parseResponse = (payload: Buffer): SSHKey[] => {
+      const numKeys = payload.readUInt32BE(0)
+      let offset = 4
+      const keys: SSHKey[] = []
+
+      for (let i = 0; i < numKeys; i++) {
+        const keyBlob = readString(payload, offset)
+        offset += 4 + keyBlob.length
+
+        const comment = readString(payload, offset)
+        offset += 4 + comment.length
+
+        const type = readString(keyBlob, 0)
+
+        keys.push({
+          type: type.toString('ascii'),
+          ssh_key: keyBlob.toString('base64'),
+          comment: comment.toString('utf8'),
+          _raw: keyBlob,
+        })
+      }
+
+      return keys
+    }
+
+    return this._request(buildRequest, parseResponse, Protocol.SSH_AGENT_IDENTITIES_ANSWER)
+  }
+
+  /**
+   * Ask the SSH agent to sign `data` with the given `key`.
+   *
+   * `key` must come from {@link requestIdentities}.
+   *
+   * Resolves with:
+   * ```ts
+   * { type: "ssh-rsa", signature: "<base64>", _raw: Buffer }
+   * ```
+   */
+  sign(key: SSHKey, data: Buffer): Promise<SSHSignature> {
+    const buildRequest = (): Buffer => {
+      // Frame: length(4) + tag(1) + key_blob(4+n) + data(4+m) + flags(4)
+      const req = Buffer.allocUnsafe(4 + 1 + 4 + key._raw.length + 4 + data.length + 4)
+      let offset = writeHeader(req, Protocol.SSH2_AGENTC_SIGN_REQUEST)
+      offset = writeString(req, key._raw, offset)
+      offset = writeString(req, data, offset)
+      req.writeUInt32BE(0, offset) // flags = 0
+      return req
+    }
+
+    const parseResponse = (payload: Buffer): SSHSignature => {
+      const blob = readString(payload, 0)
+      const type = readString(blob, 0)
+      const signature = readString(blob, 4 + type.length)
+
+      return {
+        type: type.toString('ascii'),
+        signature: signature.toString('base64'),
+        _raw: signature,
+      }
+    }
+
+    return this._request(buildRequest, parseResponse, Protocol.SSH2_AGENT_SIGN_RESPONSE)
+  }
+
+  // -------------------------------------------------------------------------
+  // Private transport
+  // -------------------------------------------------------------------------
+
+  /**
+   * Open a Unix socket to the agent, write a request, and read exactly one
+   * response frame. Validates the frame length and message type before handing
+   * the payload to `parseResponse`.
+   */
+  private _request<T>(
+    buildRequest: () => Buffer,
+    parseResponse: (payload: Buffer) => T,
+    expectedType: number,
+  ): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const socket = net.createConnection(this.sockFile)
+      let receivedData = false
+      let timedOut = false
+
+      socket.on('connect', () => {
+        socket.write(buildRequest())
+      })
+
+      socket.on('data', (data: Buffer) => {
+        receivedData = true
+        socket.end()
+
+        const frameLength = data.readUInt32BE(0)
+        if (frameLength !== data.length - 4) {
+          return reject(
+            new Error(`InvalidProtocolError: Expected frame length ${frameLength}, got ${data.length - 4}`),
+          )
+        }
+
+        const messageType = data.readUInt8(4)
+        if (messageType !== expectedType) {
+          return reject(
+            new Error(`InvalidProtocolError: Expected message type ${expectedType}, got ${messageType}`),
+          )
+        }
+
+        try {
+          resolve(parseResponse(data.subarray(5)))
+        } catch (err) {
+          reject(err)
+        }
+      })
+
+      socket.on('close', (hadError: boolean) => {
+        if (!hadError && !receivedData && !timedOut) {
+          reject(new Error('InvalidProtocolError: No response from SSH agent'))
+        }
+      })
+
+      socket.on('error', reject)
+
+      socket.setTimeout(this.timeout, () => {
+        timedOut = true
+        socket.destroy()
+        reject(new Error(`Request timed out after ${this.timeout} ms`))
+      })
+    })
+  }
+}
+
+export { SSHAgentClient, SSHKey, SSHSignature, SSHAgentClientOptions }
