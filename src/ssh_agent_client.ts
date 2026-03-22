@@ -4,6 +4,9 @@
  */
 
 import * as net from 'net'
+import * as crypto from 'crypto'
+
+const IV_BYTE_LENGTH = 16
 
 const enum Protocol {
   SSH_AGENTC_REQUEST_RSA_IDENTITIES = 11,
@@ -18,7 +21,7 @@ interface SSHKey {
   /** e.g. "ssh-rsa" */
   type: string
   /** Base64-encoded public key blob */
-  ssh_key: string
+  key: string
   /** Human-readable comment, typically the key file path */
   comment: string
   /** Raw binary key blob — required by sign() */
@@ -35,8 +38,10 @@ interface SSHSignature {
 }
 
 interface SSHAgentClientOptions {
-  /** Socket operation timeout in milliseconds (default: 1000) */
   timeout?: number
+  sockFile?: string
+  encryptionAlgo?: string
+  digestAlgo?: string
 }
 
 /** Read a length-prefixed string (uint32 BE length + bytes) from a buffer. */
@@ -66,24 +71,38 @@ function writeHeader(request: Buffer, tag: number): number {
 class SSHAgentClient {
   private readonly timeout: number
   private readonly sockFile: string
+  private readonly encryptionAlgo: string
+  private readonly digestAlgo: string
 
   /**
    * @param options - Optional configuration.
    * @throws {Error} if SSH_AUTH_SOCK is not set.
    */
   constructor(options: SSHAgentClientOptions = {}) {
+    /** Socket operation timeout in milliseconds (default: 1000) */
     this.timeout = options.timeout ?? 1000
 
-    const sockFile = process.env.SSH_AUTH_SOCK
+    /** encryption and algo key length must match */
+    this.encryptionAlgo = options.encryptionAlgo ?? 'aes-256-cbc'
+    this.digestAlgo = options.digestAlgo ?? 'sha256'
+
+    const sockFile = options.sockFile ?? process.env.SSH_AUTH_SOCK
     if (!sockFile) {
       throw new Error('SSH_AUTH_SOCK was not found in your environment')
     }
     this.sockFile = sockFile
   }
 
-  // -------------------------------------------------------------------------
-  // Public API
-  // -------------------------------------------------------------------------
+  /**
+   * Find an SSH key
+   *
+   * @param selector - (partially) matching an SSH key comment
+   */
+  getIdentity(selector: string): Promise<SSHKey | undefined> {
+    return this.requestIdentities().then(identities => {
+      return identities.find(identity => identity.comment.includes(selector))
+    })
+  }
 
   /**
    * List all SSH identities available from the agent.
@@ -116,7 +135,7 @@ class SSHAgentClient {
 
         keys.push({
           type: type.toString('ascii'),
-          ssh_key: keyBlob.toString('base64'),
+          key: keyBlob.toString('base64'),
           comment: comment.toString('utf8'),
           _raw: keyBlob,
         })
@@ -164,9 +183,38 @@ class SSHAgentClient {
     return this._request(buildRequest, parseResponse, Protocol.SSH2_AGENT_SIGN_RESPONSE)
   }
 
-  // -------------------------------------------------------------------------
-  // Private transport
-  // -------------------------------------------------------------------------
+  async encrypt(key: SSHKey, seed: string, data: crypto.BinaryLike): Promise<string> {
+    if (key.type !== 'ssh-rsa') {
+      throw new Error("We can't use ecdsa, it always gives different signatures!")
+    }
+    // Use SSH signature as encryption key
+    return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
+      const cipherKey = crypto.hash(this.digestAlgo, secret._raw, 'buffer')
+      const iv = crypto.randomBytes(IV_BYTE_LENGTH)
+      const cipher = crypto.createCipheriv(this.encryptionAlgo, cipherKey, iv)
+      let encrypted = cipher.update(data).toString('hex')
+      encrypted += cipher.final().toString('hex')
+      // Package the IV and encrypted data together so it can be stored in a single
+      // column in the database.
+      return iv.toString('hex') + encrypted
+    })
+  }
+
+  async decrypt(key: SSHKey, seed: string, data: string): Promise<Buffer> {
+    if (key.type !== 'ssh-rsa') {
+      throw new Error("We can't use ecdsa, it always gives different signatures!")
+    }
+    // Use SSH signature as decryption key
+    return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
+      const cipherKey = crypto.hash(this.digestAlgo, secret._raw, 'buffer')
+      // Unpackage the combined iv + encrypted message. Since we are using a fixed
+      // size IV, we can hard code the slice length.
+      const iv = Buffer.from(data.slice(0, IV_BYTE_LENGTH * 2), 'hex')
+      const encrypted = data.slice(IV_BYTE_LENGTH * 2)
+      const decipher = crypto.createDecipheriv(this.encryptionAlgo, cipherKey, iv)
+      return Buffer.concat([decipher.update(encrypted, 'hex'), decipher.final()])
+    })
+  }
 
   /**
    * Open a Unix socket to the agent, write a request, and read exactly one
