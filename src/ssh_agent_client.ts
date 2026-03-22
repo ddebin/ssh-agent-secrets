@@ -5,6 +5,7 @@
 
 import * as net from 'net'
 import * as crypto from 'crypto'
+import * as fs from 'fs'
 
 const IV_BYTE_LENGTH = 16
 
@@ -87,8 +88,8 @@ class SSHAgentClient {
     this.digestAlgo = options.digestAlgo ?? 'sha256'
 
     const sockFile = options.sockFile ?? process.env.SSH_AUTH_SOCK
-    if (!sockFile) {
-      throw new Error('SSH_AUTH_SOCK was not found in your environment')
+    if (!sockFile || !fs.existsSync(sockFile)) {
+      throw new Error(`Socket ${sockFile} not found`)
     }
     this.sockFile = sockFile
   }

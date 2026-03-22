@@ -1,0 +1,6 @@
+{
+  "require": ["tsx"],
+  "extension": ["ts"],
+  "reporter": "spec",
+  "spec": ["test/**/*.ts"]
+}
