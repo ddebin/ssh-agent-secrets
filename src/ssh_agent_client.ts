@@ -186,7 +186,7 @@ class SSHAgentClient {
 
   async encrypt(key: SSHKey, seed: string, data: crypto.BinaryLike): Promise<string> {
     if (key.type !== 'ssh-rsa') {
-      throw new Error("We can't use ecdsa, it always gives different signatures!")
+      throw new Error(`We can't use ${key.type} key, it always gives different signatures!`)
     }
     // Use SSH signature as encryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
@@ -203,7 +203,7 @@ class SSHAgentClient {
 
   async decrypt(key: SSHKey, seed: string, data: string): Promise<Buffer> {
     if (key.type !== 'ssh-rsa') {
-      throw new Error("We can't use ecdsa, it always gives different signatures!")
+      throw new Error(`We can't use ${key.type} key, it always gives different signatures!`)
     }
     // Use SSH signature as decryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
