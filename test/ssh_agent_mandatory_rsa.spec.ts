@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/no-unsafe-return: "off" */
+
 import { describe, it } from 'mocha'
 import { SSHAgentClient } from '../src/ssh_agent_client'
 import * as chai from 'chai'
@@ -9,27 +11,27 @@ describe('RSA key mandatory tests', () => {
   it("doesn't give the same signature twice with an ECDSA key", async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ecdsa')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
-    const signature_1 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
-    const signature_2 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
-    chai.assert.notEqual(signature_1, signature_2)
+    const signature1 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
+    const signature2 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
+    chai.assert.notEqual(signature1, signature2)
   })
   it("doesn't give the same signature twice with an ED25519 key", async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ed25519')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
-    const signature_1 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
-    const signature_2 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
-    chai.assert.notEqual(signature_1, signature_2)
+    const signature1 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
+    const signature2 = await agent.sign(identity, Buffer.from('hello', 'utf8'))
+    chai.assert.notEqual(signature1, signature2)
   })
   it('should throw if using ECDSA key for encrypting', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ecdsa')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     return chai
@@ -42,7 +44,7 @@ describe('RSA key mandatory tests', () => {
   it('should throw if using ECDSA key for decrypting', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ecdsa')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     return chai
@@ -55,7 +57,7 @@ describe('RSA key mandatory tests', () => {
   it('should throw if using ED25519 key for encrypting', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ed25519')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     return chai
@@ -65,7 +67,7 @@ describe('RSA key mandatory tests', () => {
   it('should throw if using ED25519 key for decrypting', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ed25519')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     return chai

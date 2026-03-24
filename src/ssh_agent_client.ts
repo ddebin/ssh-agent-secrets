@@ -20,23 +20,23 @@ const enum Protocol {
 }
 
 interface SSHKey {
-  /** e.g. "ssh-rsa" */
+  /** E.g. "ssh-rsa" */
   type: string
   /** Base64-encoded public key blob */
   key: string
   /** Human-readable comment, typically the key file path */
   comment: string
   /** Raw binary key blob — required by sign() */
-  _raw: Buffer
+  raw: Buffer
 }
 
 interface SSHSignature {
-  /** e.g. "ssh-rsa" */
+  /** E.g. "ssh-rsa" */
   type: string
   /** Base64-encoded signature */
   signature: string
   /** Raw binary signature */
-  _raw: Buffer
+  raw: Buffer
 }
 
 interface SSHAgentClientOptions {
@@ -47,13 +47,13 @@ interface SSHAgentClientOptions {
 }
 
 /** Read a length-prefixed string (uint32 BE length + bytes) from a buffer. */
-function readString(buffer: Buffer, offset: number): Buffer {
+const readString = function readString(buffer: Buffer, offset: number): Buffer {
   const len = buffer.readUInt32BE(offset)
   return buffer.subarray(offset + 4, offset + 4 + len)
 }
 
 /** Write a length-prefixed string into `target` at `offset`, return next offset. */
-function writeString(target: Buffer, src: Buffer, offset: number): number {
+const writeString = function writeString(target: Buffer, src: Buffer, offset: number): number {
   target.writeUInt32BE(src.length, offset)
   src.copy(target, offset + 4)
   return offset + 4 + src.length
@@ -64,7 +64,7 @@ function writeString(target: Buffer, src: Buffer, offset: number): number {
  * into `request` and return the next write offset (5).
  * The length field is the total buffer length minus the 4-byte length field itself.
  */
-function writeHeader(request: Buffer, tag: number): number {
+const writeHeader = function writeHeader(request: Buffer, tag: number): number {
   request.writeUInt32BE(request.length - 4, 0)
   request.writeUInt8(tag, 4)
   return 5
@@ -84,13 +84,13 @@ class SSHAgentClient {
     /** Socket operation timeout in milliseconds (default: 1000) */
     this.timeout = options.timeout ?? 1000
 
-    /** encryption and algo key length must match */
+    /** Encryption and algo key length must match */
     this.encryptionAlgo = options.encryptionAlgo ?? 'aes-256-cbc'
     this.digestAlgo = options.digestAlgo ?? 'sha256'
 
     const sockFile = options.sockFile ?? process.env.SSH_AUTH_SOCK
     if (!sockFile || !fs.existsSync(sockFile)) {
-      throw new Error(`Socket ${sockFile} not found`)
+      throw new Error(`Socket ${sockFile ?? '?'} not found`)
     }
     this.sockFile = sockFile
   }
@@ -101,9 +101,9 @@ class SSHAgentClient {
    * @param selector - (partially) matching an SSH key comment
    */
   getIdentity(selector: string): Promise<SSHKey | undefined> {
-    return this.requestIdentities().then(identities => {
-      return identities.find(identity => identity.comment.includes(selector))
-    })
+    return this.requestIdentities().then(identities =>
+      identities.find(identity => identity.comment.includes(selector)),
+    )
   }
 
   /**
@@ -126,7 +126,7 @@ class SSHAgentClient {
       let offset = 4
       const keys: SSHKey[] = []
 
-      for (let i = 0; i < numKeys; i++) {
+      for (let idx = 0; idx < numKeys; idx += 1) {
         const keyBlob = readString(payload, offset)
         offset += 4 + keyBlob.length
 
@@ -139,14 +139,14 @@ class SSHAgentClient {
           type: type.toString('ascii'),
           key: keyBlob.toString('base64'),
           comment: comment.toString('utf8'),
-          _raw: keyBlob,
+          raw: keyBlob,
         })
       }
 
       return keys
     }
 
-    return this._request(buildRequest, parseResponse, Protocol.SSH_AGENT_IDENTITIES_ANSWER)
+    return this.request(buildRequest, parseResponse, Protocol.SSH_AGENT_IDENTITIES_ANSWER)
   }
 
   /**
@@ -162,11 +162,11 @@ class SSHAgentClient {
   sign(key: SSHKey, data: Buffer): Promise<SSHSignature> {
     const buildRequest = (): Buffer => {
       // Frame: length(4) + tag(1) + key_blob(4+n) + data(4+m) + flags(4)
-      const req = Buffer.allocUnsafe(4 + 1 + 4 + key._raw.length + 4 + data.length + 4)
+      const req = Buffer.allocUnsafe(4 + 1 + 4 + key.raw.length + 4 + data.length + 4)
       let offset = writeHeader(req, Protocol.SSH2_AGENTC_SIGN_REQUEST)
-      offset = writeString(req, key._raw, offset)
+      offset = writeString(req, key.raw, offset)
       offset = writeString(req, data, offset)
-      req.writeUInt32BE(0, offset) // flags = 0
+      req.writeUInt32BE(0, offset) // Flags = 0
       return req
     }
 
@@ -178,11 +178,11 @@ class SSHAgentClient {
       return {
         type: type.toString('ascii'),
         signature: signature.toString('base64'),
-        _raw: signature,
+        raw: signature,
       }
     }
 
-    return this._request(buildRequest, parseResponse, Protocol.SSH2_AGENT_SIGN_RESPONSE)
+    return this.request(buildRequest, parseResponse, Protocol.SSH2_AGENT_SIGN_RESPONSE)
   }
 
   async encrypt(key: SSHKey, seed: string, data: crypto.BinaryLike): Promise<string> {
@@ -191,13 +191,12 @@ class SSHAgentClient {
     }
     // Use SSH signature as encryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const cipherKey = crypto.createHash(this.digestAlgo).update(secret._raw).digest()
+      const cipherKey = crypto.createHash(this.digestAlgo).update(secret.raw).digest()
       const iv = crypto.randomBytes(IV_BYTE_LENGTH)
       const cipher = crypto.createCipheriv(this.encryptionAlgo, cipherKey, iv)
       let encrypted = cipher.update(data).toString('hex')
       encrypted += cipher.final().toString('hex')
-      // Package the IV and encrypted data together so it can be stored in a single
-      // column in the database.
+      // Package the IV and encrypted data together so it can be stored in a single column in the database.
       return iv.toString('hex') + encrypted
     })
   }
@@ -208,9 +207,9 @@ class SSHAgentClient {
     }
     // Use SSH signature as decryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const cipherKey = crypto.createHash(this.digestAlgo).update(secret._raw).digest()
-      // Unpackage the combined iv + encrypted message. Since we are using a fixed
-      // size IV, we can hard code the slice length.
+      const cipherKey = crypto.createHash(this.digestAlgo).update(secret.raw).digest()
+      // Unpackage the combined iv + encrypted message.
+      // Since we are using a fixed size IV, we can hard code the slice length.
       const iv = Buffer.from(data.slice(0, IV_BYTE_LENGTH * 2), 'hex')
       const encrypted = data.slice(IV_BYTE_LENGTH * 2)
       const decipher = crypto.createDecipheriv(this.encryptionAlgo, cipherKey, iv)
@@ -223,7 +222,7 @@ class SSHAgentClient {
    * response frame. Validates the frame length and message type before handing
    * the payload to `parseResponse`.
    */
-  private _request<T>(
+  private request<T>(
     buildRequest: () => Buffer,
     parseResponse: (payload: Buffer) => T,
     expectedType: number,
@@ -243,22 +242,22 @@ class SSHAgentClient {
 
         const frameLength = data.readUInt32BE(0)
         if (frameLength !== data.length - 4) {
-          return reject(
+          reject(
             new Error(`InvalidProtocolError: Expected frame length ${frameLength}, got ${data.length - 4}`),
           )
+          return
         }
 
         const messageType = data.readUInt8(4)
         if (messageType !== expectedType) {
-          return reject(
-            new Error(`InvalidProtocolError: Expected message type ${expectedType}, got ${messageType}`),
-          )
+          reject(new Error(`InvalidProtocolError: Expected message type ${expectedType}, got ${messageType}`))
+          return
         }
 
         try {
           resolve(parseResponse(data.subarray(5)))
         } catch (err) {
-          reject(err)
+          reject(err as Error)
         }
       })
 

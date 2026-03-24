@@ -3,19 +3,29 @@ import { SSHAgentClient } from '../src/ssh_agent_client'
 import * as chai from 'chai'
 
 describe('SSHAgentClient tests', () => {
-  it('should throw for incorrect socket', () => {
-    chai.assert.throw(
-      () =>
-        new SSHAgentClient({
-          sockFile: '/tmp/non_existent.sock',
-        }),
-    )
+  it('should throw for non existent socket', () => {
+    chai
+      .expect(
+        () =>
+          new SSHAgentClient({
+            sockFile: 'nil.sock',
+          }),
+      )
+      .to.throw('Socket nil.sock not found')
+  })
+  it('should throw for unset socket info', () => {
+    const backup = process.env.SSH_AUTH_SOCK
+    delete process.env.SSH_AUTH_SOCK
+    chai.expect(() => new SSHAgentClient()).to.throw('Socket ? not found')
+    if (backup) {
+      process.env.SSH_AUTH_SOCK = backup
+    }
   })
   it('should find identites', async () => {
     const agent = new SSHAgentClient()
     const identities = await agent.requestIdentities()
     chai.assert.strictEqual(identities.length, 3)
-    const identity = identities[0]
+    const [identity] = identities
     chai.assert.strictEqual(identity.type, 'ssh-rsa')
     chai.assert.strictEqual(
       identity.key,
@@ -25,13 +35,13 @@ describe('SSHAgentClient tests', () => {
   })
   it('should not find identity with selector', async () => {
     const agent = new SSHAgentClient()
-    const unknown_key = await agent.getIdentity('unknown_key')
-    chai.assert.isUndefined(unknown_key)
+    const unknownKey = await agent.getIdentity('unknown_key')
+    chai.assert.isUndefined(unknownKey)
   })
   it('should find identity with selector', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ecdsa')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     chai.assert.strictEqual(identity.type, 'ecdsa-sha2-nistp256')
@@ -40,7 +50,7 @@ describe('SSHAgentClient tests', () => {
   it('should sign', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_rsa')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     const signature = await agent.sign(identity, Buffer.from('hello', 'utf8'))
@@ -53,7 +63,7 @@ describe('SSHAgentClient tests', () => {
   it('should encrypt with no error', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_rsa')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     const encrypted = await agent.encrypt(identity, 'not_a_secret', Buffer.from('Lorem ipsum dolor', 'utf8'))
@@ -62,7 +72,7 @@ describe('SSHAgentClient tests', () => {
   it('should decrypt', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_rsa')
-    if (identity === undefined) {
+    if (!identity) {
       throw new Error()
     }
     const data =
