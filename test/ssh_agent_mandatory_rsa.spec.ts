@@ -36,7 +36,7 @@ describe('RSA key mandatory tests', () => {
       .expect(agent.encrypt(identity, 'not_a_secret', Buffer.from('', 'utf8')))
       .to.be.rejectedWith(
         Error,
-        "We can't use ecdsa-sha2-nistp256 key, it always gives different signatures!",
+        'ecdsa-sha2-nistp256 key is forbidden, it always gives different signatures!',
       )
   })
   it('should throw if using ECDSA key for decrypting', async () => {
@@ -49,7 +49,7 @@ describe('RSA key mandatory tests', () => {
       .expect(agent.decrypt(identity, 'not_a_secret', ''))
       .to.be.rejectedWith(
         Error,
-        "We can't use ecdsa-sha2-nistp256 key, it always gives different signatures!",
+        'ecdsa-sha2-nistp256 key is forbidden, it always gives different signatures!',
       )
   })
   it('should throw if using ED25519 key for encrypting', async () => {
@@ -60,7 +60,7 @@ describe('RSA key mandatory tests', () => {
     }
     return chai
       .expect(agent.encrypt(identity, 'not_a_secret', Buffer.from('', 'utf8')))
-      .to.be.rejectedWith(Error, "We can't use ssh-ed25519 key, it always gives different signatures!")
+      .to.be.rejectedWith(Error, 'ssh-ed25519 key is forbidden, it always gives different signatures!')
   })
   it('should throw if using ED25519 key for decrypting', async () => {
     const agent = new SSHAgentClient()
@@ -70,6 +70,6 @@ describe('RSA key mandatory tests', () => {
     }
     return chai
       .expect(agent.decrypt(identity, 'not_a_secret', ''))
-      .to.be.rejectedWith(Error, "We can't use ssh-ed25519 key, it always gives different signatures!")
+      .to.be.rejectedWith(Error, 'ssh-ed25519 key is forbidden, it always gives different signatures!')
   })
 })

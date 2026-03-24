@@ -5,6 +5,7 @@
   "keywords": [
     "ssh",
     "encryption",
+    "decryption",
     "typescript",
     "ssh-agent",
     "cli"
@@ -29,7 +30,8 @@
     "dist/src/**/*"
   ],
   "scripts": {
-    "build": "tsc -b",
+    "build": "npm run clean && tsc -b",
+    "clean": "del-cli ./dist",
     "coverage": "nyc --reporter=lcov --reporter=text-summary npm test",
     "eslint:check": "eslint .",
     "eslint:fix": "eslint . --fix",
@@ -42,7 +44,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "commander": "^14"
+    "commander": "^13 || ^14"
   },
   "devDependencies": {
     "@commander-js/extra-typings": "^14.0.0",
@@ -53,6 +55,7 @@
     "@types/node": "^22",
     "chai": "^6",
     "chai-as-promised": "^8",
+    "del-cli": "^6",
     "eslint": "^10",
     "eslint-config-prettier": "^10",
     "globals": "^17",

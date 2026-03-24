@@ -1,6 +1,9 @@
 import { describe, it } from 'mocha'
 import { SSHAgentClient } from '../src/lib/ssh_agent_client.js'
 import * as chai from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+
+chai.use(chaiAsPromised)
 
 describe('SSHAgentClient tests', () => {
   it('should throw for non existent socket', () => {
@@ -79,5 +82,29 @@ describe('SSHAgentClient tests', () => {
       'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f50'
     const decrypted = await agent.decrypt(identity, 'not_a_secret', data)
     chai.assert.strictEqual(decrypted.toString('utf8'), 'Lorem ipsum dolor')
+  })
+  it('should throw if wrong secret', async () => {
+    const agent = new SSHAgentClient()
+    const identity = await agent.getIdentity('key_rsa')
+    if (!identity) {
+      throw new Error()
+    }
+    const data =
+      'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f50'
+    return chai
+      .expect(agent.decrypt(identity, 'wrong_secret', data))
+      .to.be.rejectedWith(Error, "Bad secret or key, can't decrypt")
+  })
+  it('should throw if corrupted encrypted data', async () => {
+    const agent = new SSHAgentClient()
+    const identity = await agent.getIdentity('key_rsa')
+    if (!identity) {
+      throw new Error()
+    }
+    const data =
+      'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f'
+    return chai
+      .expect(agent.decrypt(identity, 'not_a_secret', data))
+      .to.be.rejectedWith(Error, 'error:1C80006B:Provider routines::wrong final block length')
   })
 })

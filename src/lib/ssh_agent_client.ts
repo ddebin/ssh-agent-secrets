@@ -187,7 +187,7 @@ export class SSHAgentClient {
 
   async encrypt(key: SSHKey, seed: string, data: crypto.BinaryLike): Promise<string> {
     if (key.type !== 'ssh-rsa') {
-      throw new Error(`We can't use ${key.type} key, it always gives different signatures!`)
+      throw new Error(`${key.type} key is forbidden, it always gives different signatures!`)
     }
     // Use SSH signature as encryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
@@ -203,7 +203,7 @@ export class SSHAgentClient {
 
   async decrypt(key: SSHKey, seed: string, data: string): Promise<Buffer> {
     if (key.type !== 'ssh-rsa') {
-      throw new Error(`We can't use ${key.type} key, it always gives different signatures!`)
+      throw new Error(`${key.type} key is forbidden, it always gives different signatures!`)
     }
     // Use SSH signature as decryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
@@ -213,7 +213,18 @@ export class SSHAgentClient {
       const iv = Buffer.from(data.slice(0, IV_BYTE_LENGTH * 2), 'hex')
       const encrypted = data.slice(IV_BYTE_LENGTH * 2)
       const decipher = crypto.createDecipheriv(this.encryptionAlgo, cipherKey, iv)
-      return Buffer.concat([decipher.update(encrypted, 'hex'), decipher.final()])
+      try {
+        return Buffer.concat([decipher.update(encrypted, 'hex'), decipher.final()])
+      } catch (err) {
+        const error = err as Error
+        if ('code' in error && error.code === 'ERR_OSSL_BAD_DECRYPT') {
+          throw new Error("Bad secret or key, can't decrypt", {
+            cause: err,
+          })
+        } else {
+          throw err
+        }
+      }
     })
   }
 
