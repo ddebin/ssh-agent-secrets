@@ -10,7 +10,7 @@ Inspired by [node-ssh-agent](https://github.com/mcavage/node-ssh-agent) and [ssh
 
 ## ✨ Overview
 
-`ssh-agent-secrets` lets you encrypt and decrypt secrets using your existing SSH keys via `ssh-agent`.
+`ssh-agent-secrets` lets you encrypt and decrypt secrets using your existing SSH agent.
 
 - No `.env` files
 - No plaintext secrets
@@ -22,7 +22,7 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 
 - 🔐 SSH-based
 - 🧩 Minimal and portable
-- 🔨 Node library available to decrypt secrets on-the-fly in your code
+- 🔨 Node library included to decrypt secrets on-the-fly in your code
 - 📦 Safe to store encrypted secrets in Git
 - 👥 Works with existing SSH agent workflows like [1Password](https://developer.1password.com/docs/ssh/agent/)
 
@@ -36,7 +36,7 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 npx ssh-agent-secrets --help
 ```
 
-```
+```text
 Usage: ssh-crypt [options] <command> <source> [destination]
 
 Encrypt/Decrypt a file with your ssh-agent private key
@@ -76,6 +76,10 @@ const encrypted = await agent.encrypt(
 )
 console.log('Encrypted data:', encrypted)
 
-const decrypted = await agent.decrypt(identity, 'not_a_secret_but_a_seed', encrypted)
+const decrypted = await agent.decrypt(
+  identity,
+  'not_a_secret_but_a_seed',
+  encrypted,
+)
 console.log('Decrypted data:', decrypted.toString('utf8'))
 ```
