@@ -52,4 +52,10 @@ export default defineConfig([
       '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
+  {
+    files: ['src/index.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-argument': 'off',
+    },
+  },
 ])

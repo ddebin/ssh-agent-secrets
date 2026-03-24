@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha'
-import { SSHAgentClient } from '../src/ssh_agent_client.js'
+import { SSHAgentClient } from '../src/lib/ssh_agent_client.js'
 import * as chai from 'chai'
 
 describe('SSHAgentClient tests', () => {

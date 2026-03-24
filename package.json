@@ -1,8 +1,22 @@
 {
   "name": "ssh-agent-secrets",
   "version": "0.0.1",
+  "keywords": [
+    "ssh",
+    "encryption",
+    "typescript",
+    "ssh-agent",
+    "cli"
+  ],
+  "homepage": "https://github.com/ddebin/ssh-agent-secrets",
+  "bugs": {
+    "url": "https://github.com/ddebin/ssh-agent-secrets/issues"
+  },
   "license": "MIT",
   "type": "module",
+  "bin": {
+    "ssh-crypt": "./dist/src/index.js"
+  },
   "scripts": {
     "build": "tsc -b",
     "coverage": "nyc --reporter=lcov --reporter=text-summary npm test",
@@ -15,7 +29,11 @@
     "test": "mocha",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "commander": "^14"
+  },
   "devDependencies": {
+    "@commander-js/extra-typings": "^14.0.0",
     "@eslint/js": "^10",
     "@types/chai": "^5",
     "@types/chai-as-promised": "^8",
