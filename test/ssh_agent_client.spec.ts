@@ -26,7 +26,7 @@ describe('SSHAgentClient tests', () => {
   })
   it('should find identites', async () => {
     const agent = new SSHAgentClient()
-    const identities = await agent.requestIdentities()
+    const identities = await agent.getIdentities()
     chai.assert.strictEqual(identities.length, 3)
     const [identity] = identities
     chai.assert.strictEqual(identity.type, 'ssh-rsa')
@@ -41,7 +41,7 @@ describe('SSHAgentClient tests', () => {
     const unknownKey = await agent.getIdentity('unknown_key')
     chai.assert.isUndefined(unknownKey)
   })
-  it('should find identity with selector', async () => {
+  it('should find identity with selector in comment', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_ecdsa')
     if (!identity) {
@@ -49,6 +49,15 @@ describe('SSHAgentClient tests', () => {
     }
     chai.assert.strictEqual(identity.type, 'ecdsa-sha2-nistp256')
     chai.assert.strictEqual(identity.comment, 'key_ecdsa')
+  })
+  it('should find identity with selector in pubkey', async () => {
+    const agent = new SSHAgentClient()
+    const identity = await agent.getIdentity('IwLKBDr4Ve8wxMDTa3N9QnYDt')
+    if (!identity) {
+      throw new Error()
+    }
+    chai.assert.strictEqual(identity.type, 'ssh-rsa')
+    chai.assert.strictEqual(identity.comment, 'key_rsa')
   })
   it('should sign', async () => {
     const agent = new SSHAgentClient()

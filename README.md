@@ -64,10 +64,10 @@ npm i ssh-agent-secrets
 import { SSHAgentClient } from 'ssh-agent-secrets'
 
 const agent = new SSHAgentClient()
+
+const identities = await agent.getIdentities()
+console.log(identities)
 const identity = await agent.getIdentity('AWS')
-if (!identity) {
-  throw new Error()
-}
 
 const encrypted = await agent.encrypt(
   identity,

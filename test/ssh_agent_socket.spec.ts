@@ -21,7 +21,7 @@ describe('SSH Agent socket tests', () => {
     server.listen(sockPath)
     const agent = new SSHAgentClient({ sockFile: sockPath, timeout: 25 })
     chai
-      .expect(agent.requestIdentities())
+      .expect(agent.getIdentities())
       .to.be.rejectedWith(Error, 'Request timed out after 25 ms')
       .and.notify((err: Error) => {
         server.close()
@@ -40,7 +40,7 @@ describe('SSH Agent socket tests', () => {
     server.listen(sockPath)
     const agent = new SSHAgentClient({ sockFile: sockPath, timeout: 25 })
     chai
-      .expect(agent.requestIdentities())
+      .expect(agent.getIdentities())
       .to.be.rejectedWith(Error, 'InvalidProtocolError: Expected frame length 1, got 0')
       .and.notify((err: Error) => {
         server.close()
@@ -60,7 +60,7 @@ describe('SSH Agent socket tests', () => {
     server.listen(sockPath)
     const agent = new SSHAgentClient({ sockFile: sockPath, timeout: 25 })
     chai
-      .expect(agent.requestIdentities())
+      .expect(agent.getIdentities())
       .to.be.rejectedWith(Error, 'InvalidProtocolError: Expected message type 12, got 99')
       .and.notify((err: Error) => {
         server.close()
@@ -81,7 +81,7 @@ describe('SSH Agent socket tests', () => {
     server.listen(sockPath)
     const agent = new SSHAgentClient({ sockFile: sockPath, timeout: 25 })
     chai
-      .expect(agent.requestIdentities())
+      .expect(agent.getIdentities())
       .to.be.rejectedWith(
         Error,
         'The value of "offset" is out of range. It must be >= 0 and <= 0. Received 4',
@@ -101,7 +101,7 @@ describe('SSH Agent socket tests', () => {
     server.listen(sockPath)
     const agent = new SSHAgentClient({ sockFile: sockPath, timeout: 25 })
     chai
-      .expect(agent.requestIdentities())
+      .expect(agent.getIdentities())
       .to.be.rejectedWith(Error, 'InvalidProtocolError: No response from SSH agent')
       .and.notify((err: Error) => {
         server.close()

@@ -98,12 +98,11 @@ export class SSHAgentClient {
   /**
    * Find an SSH key
    *
-   * @param selector - (partially) matching an SSH key comment
+   * @param selector - (partially) matching an SSH key comment or pubkey
    */
-  getIdentity(selector: string): Promise<SSHKey | undefined> {
-    return this.requestIdentities().then(identities =>
-      identities.find(identity => identity.comment.includes(selector)),
-    )
+  async getIdentity(selector: string): Promise<SSHKey | undefined> {
+    const identities = await this.getIdentities()
+    return identities.find(identity => identity.comment.includes(selector) || identity.key.includes(selector))
   }
 
   /**
@@ -114,7 +113,7 @@ export class SSHAgentClient {
    * { type: "ssh-rsa", ssh_key: "<base64>", comment: "~/.ssh/id_rsa", _raw: Buffer }
    * ```
    */
-  requestIdentities(): Promise<SSHKey[]> {
+  getIdentities(): Promise<SSHKey[]> {
     const buildRequest = (): Buffer => {
       const req = Buffer.allocUnsafe(5) // 4-byte length + 1-byte tag
       writeHeader(req, Protocol.SSH_AGENTC_REQUEST_RSA_IDENTITIES)
@@ -152,7 +151,7 @@ export class SSHAgentClient {
   /**
    * Ask the SSH agent to sign `data` with the given `key`.
    *
-   * `key` must come from {@link requestIdentities}.
+   * `key` must come from {@link getIdentities} or {@link getIdentity}.
    *
    * Resolves with:
    * ```ts
