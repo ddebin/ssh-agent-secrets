@@ -1,7 +1,5 @@
-/* eslint @typescript-eslint/no-unsafe-return: "off" */
-
 import { describe, it } from 'mocha'
-import { SSHAgentClient } from '../src/ssh_agent_client'
+import { SSHAgentClient } from '../src/ssh_agent_client.js'
 import * as chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 

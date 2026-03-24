@@ -1,9 +1,10 @@
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import globals from 'globals'
+import { defineConfig } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier/flat'
 
-export default tseslint.config([
+export default defineConfig([
   {
     files: ['**/*.ts'],
     extends: [
@@ -12,6 +13,9 @@ export default tseslint.config([
       tseslint.configs.stylisticTypeChecked,
       eslintConfigPrettier,
     ],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.node,
@@ -40,6 +44,12 @@ export default tseslint.config([
           allowNumber: true,
         },
       ],
+    },
+  },
+  {
+    files: ['test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
 ])
