@@ -1,6 +1,7 @@
 {
   "name": "ssh-agent-secrets",
-  "version": "0.1.0",
+  "version": "0.1.3",
+  "description": "Node library to encrypt and decrypt secrets using an SSH agent",
   "keywords": [
     "ssh",
     "encryption",
@@ -12,12 +13,21 @@
   "bugs": {
     "url": "https://github.com/ddebin/ssh-agent-secrets/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddebin/ssh-agent-secrets.git"
+  },
   "license": "MIT",
   "author": "Damien Debin <damien.debin@gmail.com>",
   "type": "module",
+  "main": "dist/src/lib/ssh_agent_client.js",
+  "types": "dist/src/lib/ssh_agent_client.d.ts",
   "bin": {
-    "ssh-crypt": "./dist/src/index.js"
+    "ssh-crypt": "dist/src/cli.js"
   },
+  "files": [
+    "dist/src/**/*"
+  ],
   "scripts": {
     "build": "tsc -b",
     "coverage": "nyc --reporter=lcov --reporter=text-summary npm test",
@@ -25,7 +35,7 @@
     "eslint:fix": "eslint . --fix",
     "fix": "npm run eslint:fix && npm run prettier:fix",
     "lint": "npm run typecheck && npm run eslint:check && npm run prettier:check",
-    "prepublishOnly": "npm run build && npm run lint && npm run test",
+    "prepublishOnly": "npm run build && npm run lint",
     "prettier:check": "prettier --check . --config .prettierrc",
     "prettier:fix": "prettier --write . --config .prettierrc",
     "test": "mocha",

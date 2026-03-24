@@ -4,6 +4,7 @@
 name: Node.js Package
 
 on:
+  workflow_dispatch:
   release:
     types: [created]
 
@@ -15,9 +16,16 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v5
+      - uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.RSA_KEY }}
+            ${{ secrets.ECDSA_KEY }}
+            ${{ secrets.ED25519_KEY }}
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org/
       - run: npm install
+      - run: npm run test
       - run: npm publish --provenance --access public

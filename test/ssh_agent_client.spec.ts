@@ -60,7 +60,7 @@ describe('SSHAgentClient tests', () => {
       '2Ox3c3wtOkmZwINZ0nSi31NP2ysWnERdaLWMcY/CONPcLK3DPBfEolG307yMdmYAsJY5VW/sgw0ye58zOu5daos2xtWxYTHUvY7peDMcJWgQJ5YFBQWGY6ku++tqR31FSlLl9KJMUnXGdE88T1RFbaWOsg8U37IsMd5juxCeakgmcvo4PXOcWlRKBnQKRaxoOl+lQxcBNb3GM2T/kqnKkae5NebaUMOI+v7U95tzNPq0xLrZ0805rNETEcLdMszi6XS8Gbh4iDZNZGV7sA5hh9rB/avhKQHYplJ9YzyLfLEX3S8bZf41xIynt62PXeEUuM5UcYRj1lUC6quGC59Z4P2pBujjvJqj9gmKjwVcwnVo28J9OEugmRnO2QmamR0LIJIhIJmdmRRFqD86vkfyYBz733KRkvA80gXvbvligTI5LZwpUoTX7YWGkpz8fCCrMJ4WRyu9nerp9EGk4afhlAb92wMSqQV3QmXI/uRjHkbs+8rfeZS6i77Xgj4AYkHp',
     )
   })
-  it('should encrypt with no error', async () => {
+  it('should encrypt', async () => {
     const agent = new SSHAgentClient()
     const identity = await agent.getIdentity('key_rsa')
     if (!identity) {

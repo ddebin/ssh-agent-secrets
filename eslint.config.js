@@ -56,7 +56,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/index.ts'],
+    files: ['src/cli.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-argument': 'off',
       'max-params': 'off',

@@ -3,4 +3,5 @@
 node_modules/
 dist/
 mise.toml
+/*.tgz
 /id_*
