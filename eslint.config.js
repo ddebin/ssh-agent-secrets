@@ -6,7 +6,7 @@ import eslintConfigPrettier from 'eslint-config-prettier/flat'
 
 export default defineConfig([
   {
-    files: ['**/*.ts'],
+    files: ['src/**/*.ts', 'test/**/*.ts'],
     extends: [
       eslint.configs.all,
       tseslint.configs.strictTypeChecked,
@@ -50,12 +50,16 @@ export default defineConfig([
     files: ['test/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
     },
   },
   {
     files: ['src/index.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-argument': 'off',
+      'max-params': 'off',
     },
   },
 ])

@@ -1,6 +1,6 @@
 {
   "name": "ssh-agent-secrets",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "keywords": [
     "ssh",
     "encryption",
@@ -13,6 +13,7 @@
     "url": "https://github.com/ddebin/ssh-agent-secrets/issues"
   },
   "license": "MIT",
+  "author": "Damien Debin <damien.debin@gmail.com>",
   "type": "module",
   "bin": {
     "ssh-crypt": "./dist/src/index.js"
@@ -24,6 +25,7 @@
     "eslint:fix": "eslint . --fix",
     "fix": "npm run eslint:fix && npm run prettier:fix",
     "lint": "npm run typecheck && npm run eslint:check && npm run prettier:check",
+    "prepublishOnly": "npm run build && npm run lint && npm run test",
     "prettier:check": "prettier --check . --config .prettierrc",
     "prettier:fix": "prettier --write . --config .prettierrc",
     "test": "mocha",

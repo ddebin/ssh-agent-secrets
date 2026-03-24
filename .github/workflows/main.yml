@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22, 24]
+        node-version: [18, 20, 22, 24, latest]
     steps:
       - uses: actions/checkout@v5
       - uses: webfactory/ssh-agent@v0.10.0
@@ -25,6 +25,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install
       - run: npm run lint
+      - run: npm run build
       - run: npm run coverage
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

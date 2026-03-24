@@ -19,7 +19,7 @@ const enum Protocol {
   SSH_AGENT_SUCCESS = 6,
 }
 
-interface SSHKey {
+export interface SSHKey {
   /** E.g. "ssh-rsa" */
   type: string
   /** Base64-encoded public key blob */
@@ -30,7 +30,7 @@ interface SSHKey {
   raw: Buffer
 }
 
-interface SSHSignature {
+export interface SSHSignature {
   /** E.g. "ssh-rsa" */
   type: string
   /** Base64-encoded signature */
@@ -39,7 +39,7 @@ interface SSHSignature {
   raw: Buffer
 }
 
-interface SSHAgentClientOptions {
+export interface SSHAgentClientOptions {
   timeout?: number
   sockFile?: string
   encryptionAlgo?: string
@@ -70,7 +70,7 @@ const writeHeader = function writeHeader(request: Buffer, tag: number): number {
   return 5
 }
 
-class SSHAgentClient {
+export class SSHAgentClient {
   private readonly timeout: number
   private readonly sockFile: string
   private readonly encryptionAlgo: string
@@ -277,5 +277,3 @@ class SSHAgentClient {
     })
   }
 }
-
-export { SSHAgentClient, SSHKey, SSHSignature, SSHAgentClientOptions }

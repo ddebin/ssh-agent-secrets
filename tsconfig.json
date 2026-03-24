@@ -1,4 +1,5 @@
 {
+  "$schema": "https://www.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "es2021",
     "module": "node16",
@@ -6,10 +7,19 @@
     "outDir": "dist",
     "strict": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "commander": ["./src/type/commander.d.ts"]
     },
-    "types": ["node"]
+    "types": ["node"],
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noImplicitOverride": true,
+    "sourceMap": true,
+    "declaration": true
   },
   "include": ["src", "test"]
 }

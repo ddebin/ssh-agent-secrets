@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable max-params */
+
 import * as fs from 'fs'
 import { Argument, program } from 'commander'
 import { SSHAgentClient } from './lib/ssh_agent_client.js'
