@@ -1,6 +1,7 @@
 /**
  * SSH Agent Client
  * TypeScript rewrite of https://github.com/mcavage/node-ssh-agent
+ * Inspired by https://gist.github.com/davisford/2949118
  */
 
 import * as net from 'net'
@@ -190,7 +191,7 @@ class SSHAgentClient {
     }
     // Use SSH signature as encryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const cipherKey = crypto.hash(this.digestAlgo, secret._raw, 'buffer')
+      const cipherKey = crypto.createHash(this.digestAlgo).update(secret._raw).digest()
       const iv = crypto.randomBytes(IV_BYTE_LENGTH)
       const cipher = crypto.createCipheriv(this.encryptionAlgo, cipherKey, iv)
       let encrypted = cipher.update(data).toString('hex')
@@ -207,7 +208,7 @@ class SSHAgentClient {
     }
     // Use SSH signature as decryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const cipherKey = crypto.hash(this.digestAlgo, secret._raw, 'buffer')
+      const cipherKey = crypto.createHash(this.digestAlgo).update(secret._raw).digest()
       // Unpackage the combined iv + encrypted message. Since we are using a fixed
       // size IV, we can hard code the slice length.
       const iv = Buffer.from(data.slice(0, IV_BYTE_LENGTH * 2), 'hex')
