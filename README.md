@@ -24,7 +24,7 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 - 🧩 Minimal and portable
 - 🔨 Node library included to decrypt secrets on-the-fly in your code
 - 📦 Safe to store encrypted secrets in Git
-- 👥 Works with existing SSH agent workflows like [1Password](https://developer.1password.com/docs/ssh/agent/)
+- 👥 Works with existing SSH agent workflows like [1Password](https://developer.1password.com/docs/ssh/agent/) or [Bitwarden](https://bitwarden.com/help/ssh-agent/)
 
 ## ⚠️ Limitations
 
