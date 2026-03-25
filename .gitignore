@@ -4,4 +4,6 @@ node_modules/
 dist/
 mise.toml
 /*.tgz
+/.nyc_output
+/coverage
 /id_*

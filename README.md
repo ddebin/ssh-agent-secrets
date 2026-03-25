@@ -1,6 +1,7 @@
 # ssh-agent-secrets
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ddebin/ssh-agent-secrets/main.yml)](https://github.com/ddebin/ssh-agent-secrets/actions)
+[![Codecov](https://img.shields.io/codecov/c/github/ddebin/ssh-agent-secrets)](https://app.codecov.io/gh/ddebin/ssh-agent-secrets)
 [![Release](https://img.shields.io/github/v/release/ddebin/ssh-agent-secrets)](https://github.com/ddebin/ssh-agent-secrets/releases)
 [![License](https://img.shields.io/github/license/ddebin/ssh-agent-secrets)](./LICENSE)
 
@@ -37,16 +38,16 @@ npx ssh-agent-secrets --help
 ```
 
 ```text
-Usage: ssh-crypt [options] <command> <source> [destination]
+Usage: ssh-crypt [options] <command>
 
 Encrypt/Decrypt a file with your ssh-agent private key
 
 Arguments:
-  command              (choices: "encrypt", "decrypt")
-  source               file to encrypt
-  destination          output path (default to stdout)
+  command              action (choices: "encrypt", "decrypt")
 
 Options:
+  -i, --input <path>   input path (default to stdin)
+  -o, --output <path>  output path (default to stdout)
   -k, --key <string>   select the first matching pubkey in the ssh-agent
   -s, --seed <string>  is used to generate the secret
   -h, --help           display help for command

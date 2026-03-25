@@ -32,7 +32,7 @@
   "scripts": {
     "build": "npm run clean && tsc -b",
     "clean": "del-cli ./dist",
-    "coverage": "nyc --reporter=lcov --reporter=text-summary npm test",
+    "coverage": "nyc --reporter=lcov --reporter=text npm test",
     "eslint:check": "eslint .",
     "eslint:fix": "eslint . --fix",
     "fix": "npm run eslint:fix && npm run prettier:fix",
