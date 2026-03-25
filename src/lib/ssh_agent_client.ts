@@ -108,7 +108,7 @@ export class SSHAgentClient {
    *
    * Resolves with an array of key objects:
    * ```ts
-   * { type: "ssh-rsa", ssh_key: "<base64>", comment: "~/.ssh/id_rsa", _raw: Buffer }
+   * { type: "ssh-rsa", ssh_key: "<base64>", comment: "~/.ssh/id_rsa", raw: Buffer }
    * ```
    */
   getIdentities(): Promise<SSHKey[]> {
@@ -153,7 +153,7 @@ export class SSHAgentClient {
    *
    * Resolves with:
    * ```ts
-   * { type: "ssh-rsa", signature: "<base64>", _raw: Buffer }
+   * { type: "ssh-rsa", signature: "<base64>", raw: Buffer }
    * ```
    */
   sign(key: SSHKey, data: Buffer): Promise<SSHSignature> {

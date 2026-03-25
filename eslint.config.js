@@ -29,6 +29,7 @@ export default defineConfig([
       'one-var': 'off',
       'no-magic-numbers': 'off',
       'no-inline-comments': 'off',
+      'no-ternary': 'off',
       'max-statements': 'off',
       'max-lines': 'off',
       'max-lines-per-function': 'off',
