@@ -8,8 +8,6 @@ import * as net from 'net'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
 
-const IV_BYTE_LENGTH = 16
-
 const enum Protocol {
   SSH_AGENTC_REQUEST_RSA_IDENTITIES = 11,
   SSH_AGENT_IDENTITIES_ANSWER = 12,
@@ -42,7 +40,7 @@ export interface SSHSignature {
 export interface SSHAgentClientOptions {
   timeout?: number
   sockFile?: string
-  encryptionAlgo?: string
+  cipherAlgo?: string
   digestAlgo?: string
 }
 
@@ -73,7 +71,7 @@ const writeHeader = function writeHeader(request: Buffer, tag: number): number {
 export class SSHAgentClient {
   private readonly timeout: number
   private readonly sockFile: string
-  private readonly encryptionAlgo: string
+  private readonly cipherAlgo: string
   private readonly digestAlgo: string
 
   /**
@@ -85,7 +83,7 @@ export class SSHAgentClient {
     this.timeout = options.timeout ?? 1000
 
     /** Encryption and algo key length must match */
-    this.encryptionAlgo = options.encryptionAlgo ?? 'aes-256-cbc'
+    this.cipherAlgo = options.cipherAlgo ?? 'aes-256-cbc'
     this.digestAlgo = options.digestAlgo ?? 'sha256'
 
     const sockFile = options.sockFile ?? process.env.SSH_AUTH_SOCK
@@ -190,9 +188,9 @@ export class SSHAgentClient {
     }
     // Use SSH signature as encryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const cipherKey = crypto.createHash(this.digestAlgo).update(secret.raw).digest()
-      const iv = crypto.randomBytes(IV_BYTE_LENGTH)
-      const cipher = crypto.createCipheriv(this.encryptionAlgo, cipherKey, iv)
+      const [cipherKey, cipherIvLength] = this.getKey(secret)
+      const iv = crypto.randomBytes(cipherIvLength)
+      const cipher = crypto.createCipheriv(this.cipherAlgo, cipherKey, iv)
       let encrypted = cipher.update(data).toString('hex')
       encrypted += cipher.final().toString('hex')
       // Package the IV and encrypted data together so it can be stored in a single column in the database.
@@ -206,12 +204,12 @@ export class SSHAgentClient {
     }
     // Use SSH signature as decryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const cipherKey = crypto.createHash(this.digestAlgo).update(secret.raw).digest()
+      const [cipherKey, cipherIvLength] = this.getKey(secret)
       // Unpackage the combined iv + encrypted message.
       // Since we are using a fixed size IV, we can hard code the slice length.
-      const iv = Buffer.from(data.slice(0, IV_BYTE_LENGTH * 2), 'hex')
-      const encrypted = data.slice(IV_BYTE_LENGTH * 2)
-      const decipher = crypto.createDecipheriv(this.encryptionAlgo, cipherKey, iv)
+      const iv = Buffer.from(data.slice(0, cipherIvLength * 2), 'hex')
+      const encrypted = data.slice(cipherIvLength * 2)
+      const decipher = crypto.createDecipheriv(this.cipherAlgo, cipherKey, iv)
       try {
         return Buffer.concat([decipher.update(encrypted, 'hex'), decipher.final()])
       } catch (err) {
@@ -225,6 +223,18 @@ export class SSHAgentClient {
         }
       }
     })
+  }
+
+  private getKey(signature: SSHSignature): [crypto.KeyObject, number] {
+    const cipherInfo = crypto.getCipherInfo(this.cipherAlgo)
+    if (!cipherInfo?.ivLength) {
+      throw new Error('Wrong cipher algo')
+    }
+    const hash = crypto.createHash(this.digestAlgo).update(signature.raw).digest()
+    if (hash.length < cipherInfo.keyLength) {
+      throw new Error("Digest algo doesn't match cipher key length")
+    }
+    return [crypto.createSecretKey(hash.subarray(0, cipherInfo.keyLength)), cipherInfo.ivLength]
   }
 
   /**

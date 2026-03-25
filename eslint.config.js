@@ -30,6 +30,7 @@ export default defineConfig([
       'no-magic-numbers': 'off',
       'no-inline-comments': 'off',
       'max-statements': 'off',
+      'max-lines': 'off',
       'max-lines-per-function': 'off',
       'sort-imports': [
         'error',
