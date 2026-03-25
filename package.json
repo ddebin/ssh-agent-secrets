@@ -1,6 +1,6 @@
 {
   "name": "ssh-agent-secrets",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Node library to encrypt and decrypt secrets using an SSH agent",
   "keywords": [
     "ssh",
