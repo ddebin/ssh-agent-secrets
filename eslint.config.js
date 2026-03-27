@@ -33,13 +33,17 @@ export default defineConfig([
       'max-statements': 'off',
       'max-lines': 'off',
       'max-lines-per-function': 'off',
+      'max-params': 'off',
       'sort-imports': [
         'error',
         {
           ignoreCase: true,
-          ignoreDeclarationSort: true,
+          ignoreMemberSort: false,
+          memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single'],
+          allowSeparatedGroups: false,
         },
       ],
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/restrict-template-expressions': [
         'error',
         {

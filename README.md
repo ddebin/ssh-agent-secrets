@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ddebin/ssh-agent-secrets/main.yml)](https://github.com/ddebin/ssh-agent-secrets/actions)
 [![Codecov](https://img.shields.io/codecov/c/github/ddebin/ssh-agent-secrets)](https://app.codecov.io/gh/ddebin/ssh-agent-secrets)
-[![Release](https://img.shields.io/github/v/release/ddebin/ssh-agent-secrets)](https://github.com/ddebin/ssh-agent-secrets/releases)
+[![NPM](https://img.shields.io/npm/v/ssh-agent-secrets)](https://www.npmjs.com/package/ssh-agent-secrets)
 [![License](https://img.shields.io/github/license/ddebin/ssh-agent-secrets)](./LICENSE)
 
 > Encrypt and decrypt secrets using your SSH agent — no plaintext, no extra key management.
@@ -43,14 +43,19 @@ Usage: ssh-crypt [options] <command>
 Encrypt/Decrypt a file with your ssh-agent private key
 
 Arguments:
-  command              action (choices: "encrypt", "decrypt")
+  command                       action (choices: "encrypt", "decrypt")
 
 Options:
-  -i, --input <path>   input path (default to stdin)
-  -o, --output <path>  output path (default to stdout)
-  -k, --key <string>   select the first matching pubkey in the ssh-agent
-  -s, --seed <string>  is used to generate the secret
-  -h, --help           display help for command
+  -i, --input <path>            input path (default to stdin)
+  --encryptEncoding <encoding>  encrypt output encoding (choices: "hex",
+                                "base64")
+  -o, --output <path>           output path (default to stdout)
+  --decryptEncoding <encoding>  decrypt input encoding (choices: "hex",
+                                "base64")
+  -k, --key <string>            select the first matching pubkey in the
+                                ssh-agent
+  -s, --seed <string>           is used to generate the secret
+  -h, --help                    display help for command
 ```
 
 ## 🛠️ Library installation
@@ -68,6 +73,7 @@ const agent = new SSHAgentClient()
 
 const identities = await agent.getIdentities()
 console.log(identities)
+
 const identity = await agent.getIdentity('AWS')
 
 const encrypted = await agent.encrypt(

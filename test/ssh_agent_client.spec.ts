@@ -1,7 +1,7 @@
-import { describe, it } from 'mocha'
-import { SSHAgentClient } from '../src/lib/ssh_agent_client.js'
 import * as chai from 'chai'
+import { describe, it } from 'mocha'
 import chaiAsPromised from 'chai-as-promised'
+import { SSHAgentClient } from '../src/lib/ssh_agent_client.ts'
 
 chai.use(chaiAsPromised)
 
@@ -140,9 +140,11 @@ describe('SSHAgentClient cipher combination tests', () => {
     if (!identity) {
       throw new Error()
     }
-    const data =
-      'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f50'
-    const decrypted = await agent.decrypt(identity, SEED, data)
+    const decrypted = await agent.decrypt(
+      identity,
+      SEED,
+      'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f50',
+    )
     chai.assert.strictEqual(decrypted.toString('utf8'), DECODED_STRING)
   })
   it('should encrypt and decrypt with aes128/shake128', async () => {
@@ -172,6 +174,32 @@ describe('SSHAgentClient cipher combination tests', () => {
       identity,
       SEED,
       '280cd2993bb8f9d7ec14ef0c1d94d4ac8e128a39f3f9cba9f5730a7d99674057766e099c17a6786a4a6b33670d1b45b7',
+    )
+    chai.assert.strictEqual(decrypted.toString('utf8'), DECODED_STRING)
+  })
+})
+
+describe('SSHAgentClient encodings tests', () => {
+  it('should encrypt to base64', async () => {
+    const agent = new SSHAgentClient()
+    const identity = await agent.getIdentity('key_rsa')
+    if (!identity) {
+      throw new Error()
+    }
+    const encrypted = await agent.encrypt(identity, SEED, DECODED_STRING_BUFFER, 'base64')
+    chai.assert.strictEqual(encrypted.length, 64)
+  })
+  it('should decrypt from base64', async () => {
+    const agent = new SSHAgentClient()
+    const identity = await agent.getIdentity('key_rsa')
+    if (!identity) {
+      throw new Error()
+    }
+    const decrypted = await agent.decrypt(
+      identity,
+      SEED,
+      '8epe+B3bWcSGTPpyW2MRqHeAKjTj2NVnR4q1YNVB5LfXw9JE02wsb3RqZBTFbMXc',
+      'base64',
     )
     chai.assert.strictEqual(decrypted.toString('utf8'), DECODED_STRING)
   })

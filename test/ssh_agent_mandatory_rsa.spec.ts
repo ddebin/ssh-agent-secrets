@@ -1,7 +1,7 @@
-import { describe, it } from 'mocha'
-import { SSHAgentClient } from '../src/lib/ssh_agent_client.js'
 import * as chai from 'chai'
+import { describe, it } from 'mocha'
 import chaiAsPromised from 'chai-as-promised'
+import { SSHAgentClient } from '../src/lib/ssh_agent_client.ts'
 
 chai.use(chaiAsPromised)
 
