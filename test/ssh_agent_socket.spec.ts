@@ -1,9 +1,9 @@
-import { describe, it } from 'mocha'
-import { SSHAgentClient } from '../src/lib/ssh_agent_client.js'
 import * as chai from 'chai'
-import * as net from 'net'
-import * as fs from 'fs'
+import { describe, it } from 'mocha'
+import { existsSync, unlinkSync } from 'node:fs'
 import chaiAsPromised from 'chai-as-promised'
+import { createServer } from 'node:net'
+import { SSHAgentClient } from '../src/lib/ssh_agent_client.ts'
 
 chai.use(chaiAsPromised)
 
@@ -11,13 +11,13 @@ describe('SSH Agent socket tests', () => {
   const sockPath = '/tmp/ssh_agent_mock.test.sock'
 
   afterEach(() => {
-    if (fs.existsSync(sockPath)) {
-      fs.unlinkSync(sockPath)
+    if (existsSync(sockPath)) {
+      unlinkSync(sockPath)
     }
   })
 
   it("should timeout if socket doesn't respond", done => {
-    const server = net.createServer()
+    const server = createServer()
     server.listen(sockPath)
     const agent = new SSHAgentClient({ sockFile: sockPath, timeout: 25 })
     chai
@@ -30,7 +30,7 @@ describe('SSH Agent socket tests', () => {
   })
 
   it('should throw if invalid frame length 0x0001', done => {
-    const server = net.createServer(socket => {
+    const server = createServer(socket => {
       socket.on('data', () => {
         const res = Buffer.allocUnsafe(4)
         res.writeUint32BE(1)
@@ -49,7 +49,7 @@ describe('SSH Agent socket tests', () => {
   })
 
   it('should throw if unexpected message type', done => {
-    const server = net.createServer(socket => {
+    const server = createServer(socket => {
       socket.on('data', () => {
         const res = Buffer.allocUnsafe(5)
         res.writeUint32BE(1)
@@ -69,7 +69,7 @@ describe('SSH Agent socket tests', () => {
   })
 
   it('should throw if unexpected response format', done => {
-    const server = net.createServer(socket => {
+    const server = createServer(socket => {
       socket.on('data', () => {
         const res = Buffer.allocUnsafe(9)
         res.writeUint32BE(5)
@@ -93,7 +93,7 @@ describe('SSH Agent socket tests', () => {
   })
 
   it('should throw if socket close', done => {
-    const server = net.createServer(socket => {
+    const server = createServer(socket => {
       socket.on('data', () => {
         socket.end()
       })

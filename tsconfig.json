@@ -1,12 +1,8 @@
 {
   "$schema": "https://www.schemastore.org/tsconfig",
+  "extends": ["@tsconfig/node16/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
   "compilerOptions": {
-    "target": "es2021",
-    "module": "node16",
-    "esModuleInterop": true,
     "outDir": "dist",
-    "strict": true,
-    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "commander": ["./src/type/commander.d.ts"]
@@ -17,7 +13,6 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
     "noImplicitOverride": true,
     "sourceMap": true,
     "declaration": true

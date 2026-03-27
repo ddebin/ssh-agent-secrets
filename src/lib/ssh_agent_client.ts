@@ -1,21 +1,19 @@
-/**
- * SSH Agent Client
- * TypeScript rewrite of https://github.com/mcavage/node-ssh-agent
- * Inspired by https://gist.github.com/davisford/2949118
- */
+import * as crypto from 'node:crypto'
+import { createConnection } from 'node:net'
+import { DecryptTransform } from './decrypt_transform.ts'
+import { EncryptTransform } from './encrypt_transform.ts'
+import { existsSync } from 'node:fs'
 
-import * as net from 'net'
-import * as crypto from 'crypto'
-import * as fs from 'fs'
+const Protocol = {
+  SSH_AGENTC_REQUEST_RSA_IDENTITIES: 11,
+  SSH_AGENT_IDENTITIES_ANSWER: 12,
+  SSH2_AGENTC_SIGN_REQUEST: 13,
+  SSH2_AGENT_SIGN_RESPONSE: 14,
+  SSH_AGENT_FAILURE: 5,
+  SSH_AGENT_SUCCESS: 6,
+} as const
 
-const enum Protocol {
-  SSH_AGENTC_REQUEST_RSA_IDENTITIES = 11,
-  SSH_AGENT_IDENTITIES_ANSWER = 12,
-  SSH2_AGENTC_SIGN_REQUEST = 13,
-  SSH2_AGENT_SIGN_RESPONSE = 14,
-  SSH_AGENT_FAILURE = 5,
-  SSH_AGENT_SUCCESS = 6,
-}
+type Protocol = (typeof Protocol)[keyof typeof Protocol]
 
 export interface SSHKey {
   /** E.g. "ssh-rsa" */
@@ -87,7 +85,7 @@ export class SSHAgentClient {
     this.digestAlgo = options.digestAlgo ?? 'sha256'
 
     const sockFile = options.sockFile ?? process.env.SSH_AUTH_SOCK
-    if (!sockFile || !fs.existsSync(sockFile)) {
+    if (!sockFile || !existsSync(sockFile)) {
       throw new Error(`Socket ${sockFile ?? '?'} not found`)
     }
     this.sockFile = sockFile
@@ -182,36 +180,47 @@ export class SSHAgentClient {
     return this.request(buildRequest, parseResponse, Protocol.SSH2_AGENT_SIGN_RESPONSE)
   }
 
-  async encrypt(key: SSHKey, seed: string, data: crypto.BinaryLike): Promise<string> {
-    if (key.type !== 'ssh-rsa') {
-      throw new Error(`${key.type} key is forbidden, it always gives different signatures!`)
-    }
-    // Use SSH signature as encryption key
-    return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const [cipherKey, cipherIvLength] = this.getKey(secret)
-      const iv = crypto.randomBytes(cipherIvLength)
-      const cipher = crypto.createCipheriv(this.cipherAlgo, cipherKey, iv)
-      let encrypted = cipher.update(data).toString('hex')
-      encrypted += cipher.final().toString('hex')
+  async encrypt(
+    key: SSHKey,
+    seed: string,
+    data: NodeJS.ArrayBufferView,
+    outputEncoding: BufferEncoding = 'hex',
+  ): Promise<string> {
+    return this.getCipherIV(key, seed).then(({ cipher, iv }) =>
       // Package the IV and encrypted data together so it can be stored in a single column in the database.
-      return iv.toString('hex') + encrypted
+      Buffer.concat([iv, cipher.update(data), cipher.final()]).toString(outputEncoding),
+    )
+  }
+
+  async getEncryptTransform(
+    key: SSHKey,
+    seed: string,
+    outputEncoding?: BufferEncoding,
+  ): Promise<EncryptTransform> {
+    return this.getCipherIV(key, seed).then(({ cipher, iv }) => {
+      const transform = new EncryptTransform(cipher, iv)
+      if (outputEncoding) {
+        transform.setEncoding(outputEncoding)
+      }
+      return transform
     })
   }
 
-  async decrypt(key: SSHKey, seed: string, data: string): Promise<Buffer> {
-    if (key.type !== 'ssh-rsa') {
-      throw new Error(`${key.type} key is forbidden, it always gives different signatures!`)
-    }
-    // Use SSH signature as decryption key
-    return this.sign(key, Buffer.from(seed, 'utf8')).then(secret => {
-      const [cipherKey, cipherIvLength] = this.getKey(secret)
+  async decrypt(
+    key: SSHKey,
+    seed: string,
+    data: string,
+    inputEncoding: BufferEncoding = 'hex',
+  ): Promise<Buffer> {
+    return this.getCipherKey(key, seed).then(({ cipherKey, ivLength }) => {
       // Unpackage the combined iv + encrypted message.
       // Since we are using a fixed size IV, we can hard code the slice length.
-      const iv = Buffer.from(data.slice(0, cipherIvLength * 2), 'hex')
-      const encrypted = data.slice(cipherIvLength * 2)
+      const buffer = Buffer.from(data, inputEncoding)
+      const iv = buffer.subarray(0, ivLength)
+      const encrypted = buffer.subarray(ivLength)
       const decipher = crypto.createDecipheriv(this.cipherAlgo, cipherKey, iv)
       try {
-        return Buffer.concat([decipher.update(encrypted, 'hex'), decipher.final()])
+        return Buffer.concat([decipher.update(encrypted), decipher.final()])
       } catch (err) {
         const error = err as Error
         if ('code' in error && error.code === 'ERR_OSSL_BAD_DECRYPT') {
@@ -225,16 +234,46 @@ export class SSHAgentClient {
     })
   }
 
-  private getKey(signature: SSHSignature): [crypto.KeyObject, number] {
-    const cipherInfo = crypto.getCipherInfo(this.cipherAlgo)
-    if (!cipherInfo?.ivLength) {
-      throw new Error('Wrong cipher algo')
+  async getDecryptTransform(
+    key: SSHKey,
+    seed: string,
+    inputEncoding?: BufferEncoding,
+  ): Promise<DecryptTransform> {
+    return this.getCipherKey(key, seed).then(
+      ({ cipherKey, ivLength }) => new DecryptTransform(this.cipherAlgo, cipherKey, ivLength, inputEncoding),
+    )
+  }
+
+  private async getCipherIV(key: SSHKey, seed: string): Promise<{ cipher: crypto.Cipher; iv: Buffer }> {
+    return this.getCipherKey(key, seed).then(({ cipherKey, ivLength }) => {
+      const iv = crypto.randomBytes(ivLength)
+      const cipher = crypto.createCipheriv(this.cipherAlgo, cipherKey, iv)
+      return { cipher, iv }
+    })
+  }
+
+  private async getCipherKey(
+    key: SSHKey,
+    seed: string,
+  ): Promise<{ cipherKey: crypto.KeyObject; ivLength: number }> {
+    if (key.type !== 'ssh-rsa') {
+      throw new Error(`${key.type} key is forbidden, it always gives different signatures!`)
     }
-    const hash = crypto.createHash(this.digestAlgo).update(signature.raw).digest()
-    if (hash.length < cipherInfo.keyLength) {
-      throw new Error("Digest algo doesn't match cipher key length")
-    }
-    return [crypto.createSecretKey(hash.subarray(0, cipherInfo.keyLength)), cipherInfo.ivLength]
+    // Use SSH signature as decryption key
+    return this.sign(key, Buffer.from(seed, 'utf8')).then(signature => {
+      const cipherInfo = crypto.getCipherInfo(this.cipherAlgo)
+      if (!cipherInfo?.ivLength) {
+        throw new Error('Wrong cipher algo')
+      }
+      const hash = crypto.createHash(this.digestAlgo).update(signature.raw).digest()
+      if (hash.length < cipherInfo.keyLength) {
+        throw new Error("Digest algo doesn't match cipher key length")
+      }
+      return {
+        cipherKey: crypto.createSecretKey(hash.subarray(0, cipherInfo.keyLength)),
+        ivLength: cipherInfo.ivLength,
+      }
+    })
   }
 
   /**
@@ -248,7 +287,7 @@ export class SSHAgentClient {
     expectedType: number,
   ): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      const socket = net.createConnection(this.sockFile)
+      const socket = createConnection(this.sockFile)
       let receivedData = false
       let timedOut = false
 

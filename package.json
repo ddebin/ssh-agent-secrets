@@ -1,13 +1,13 @@
 {
   "name": "ssh-agent-secrets",
-  "version": "0.2.1",
-  "description": "Node library to encrypt and decrypt secrets using an SSH agent",
+  "version": "0.3.0",
+  "description": "Encrypt and decrypt secrets using an SSH agent",
   "keywords": [
     "ssh",
-    "encryption",
-    "decryption",
-    "typescript",
     "ssh-agent",
+    "encryption",
+    "ssh-key",
+    "cryptography",
     "cli"
   ],
   "homepage": "https://github.com/ddebin/ssh-agent-secrets",
@@ -21,8 +21,8 @@
   "license": "MIT",
   "author": "Damien Debin <damien.debin@gmail.com>",
   "type": "module",
-  "main": "dist/src/lib/ssh_agent_client.js",
-  "types": "dist/src/lib/ssh_agent_client.d.ts",
+  "main": "dist/src/lib/index.js",
+  "types": "dist/src/lib/index.d.ts",
   "bin": {
     "ssh-crypt": "dist/src/cli.js"
   },
@@ -32,7 +32,7 @@
   "scripts": {
     "build": "npm run clean && tsc -b",
     "clean": "del-cli ./dist",
-    "coverage": "nyc --reporter=lcov --reporter=text npm test",
+    "coverage": "nyc --reporter=lcovonly --reporter=text npm test",
     "eslint:check": "eslint .",
     "eslint:fix": "eslint . --fix",
     "fix": "npm run eslint:fix && npm run prettier:fix",
@@ -49,6 +49,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10",
+    "@tsconfig/node-ts": "^23.6.4",
+    "@tsconfig/node16": "^16.1.8",
     "@types/chai": "^5",
     "@types/chai-as-promised": "^8",
     "@types/mocha": "^10",
@@ -65,7 +67,7 @@
     "prettier-plugin-packagejson": "^3",
     "ts-node": "^10",
     "tsx": "^4",
-    "typescript": "^5",
+    "typescript": "^5.8",
     "typescript-eslint": "^8"
   },
   "engines": {
