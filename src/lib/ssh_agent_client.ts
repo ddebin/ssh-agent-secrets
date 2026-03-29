@@ -219,18 +219,7 @@ export class SSHAgentClient {
       const iv = buffer.subarray(0, ivLength)
       const encrypted = buffer.subarray(ivLength)
       const decipher = crypto.createDecipheriv(this.cipherAlgo, cipherKey, iv)
-      try {
-        return Buffer.concat([decipher.update(encrypted), decipher.final()])
-      } catch (err) {
-        const error = err as Error
-        if ('code' in error && error.code === 'ERR_OSSL_BAD_DECRYPT') {
-          throw new Error("Bad secret or key, can't decrypt", {
-            cause: err,
-          })
-        } else {
-          throw err
-        }
-      }
+      return Buffer.concat([decipher.update(encrypted), decipher.final()])
     })
   }
 

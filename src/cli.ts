@@ -2,6 +2,7 @@
 
 import { Argument, Option, program } from '@commander-js/extra-typings'
 import { createReadStream, createWriteStream } from 'node:fs'
+import { pipeline } from 'node:stream/promises'
 import { SSHAgentClient } from './lib/ssh_agent_client.js'
 
 program
@@ -23,13 +24,18 @@ program
       }
       const readable = options.input ? createReadStream(options.input) : process.stdin
       const writable = options.output ? createWriteStream(options.output) : process.stdout
-      const transform =
+      const getTransform =
         action === 'decrypt'
-          ? await agent.getDecryptTransform(key, options.seed, options.decryptEncoding)
-          : await agent.getEncryptTransform(key, options.seed, options.encryptEncoding)
-      readable.pipe(transform).pipe(writable)
+          ? agent.getDecryptTransform(key, options.seed, options.decryptEncoding)
+          : agent.getEncryptTransform(key, options.seed, options.encryptEncoding)
+      await getTransform.then(transform => pipeline(readable, transform, writable))
     } catch (err) {
-      program.error(`Error: ${(err as Error).message}`)
+      const error = err as Error
+      if ('code' in error && error.code === 'ERR_OSSL_BAD_DECRYPT') {
+        program.error("Bad secret or key, can't decrypt")
+      } else {
+        program.error(`Error: ${error.message}`)
+      }
     }
   })
 
