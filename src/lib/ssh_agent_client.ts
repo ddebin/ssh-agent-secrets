@@ -256,7 +256,7 @@ export class SSHAgentClient {
     key: SSHKey,
     seed: string,
   ): Promise<{ cipherKey: crypto.KeyObject; ivLength: number }> {
-    if (key.type !== 'ssh-rsa' && key.type !== 'ssh-ed25519') {
+    if (/ecdsa/iu.test(key.type)) {
       throw new Error(`${key.type} key is forbidden, it always gives different signatures!`)
     }
     // Use SSH signature as decryption key
