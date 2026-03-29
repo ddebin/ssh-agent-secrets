@@ -24,8 +24,8 @@ export class DecryptTransform extends Transform {
 
   override _transform(chunk: any, _encoding: BufferEncoding, callback: TransformCallback) {
     let data = chunk as Buffer
-    if (this.inputEncoding && this.inputEncoding !== 'binary') {
-      data = Buffer.from(data.toString().trim(), this.inputEncoding)
+    if (this.inputEncoding) {
+      data = Buffer.from(data.toString(), this.inputEncoding)
     }
     if (!this.decipher) {
       // Unpackage the combined iv + encrypted message.
