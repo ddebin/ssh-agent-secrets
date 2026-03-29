@@ -77,8 +77,8 @@ export class SSHAgentClient {
    * @throws {Error} if SSH_AUTH_SOCK is not set.
    */
   constructor(options: SSHAgentClientOptions = {}) {
-    /** Socket operation timeout in milliseconds (default: 1000) */
-    this.timeout = options.timeout ?? 1000
+    /** Socket operation timeout in milliseconds (default: 10000) */
+    this.timeout = options.timeout ?? 10000
 
     /** Encryption and algo key length must match */
     this.cipherAlgo = options.cipherAlgo ?? 'aes-256-cbc'

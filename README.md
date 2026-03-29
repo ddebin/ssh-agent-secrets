@@ -7,7 +7,7 @@
 
 > Encrypt and decrypt secrets using your SSH agent — no plaintext, no extra key management.
 
-Inspired by [node-ssh-agent](https://github.com/mcavage/node-ssh-agent) and [ssh-crypt.bash](https://gist.github.com/davisford/2949118)
+Inspired by [node-ssh-agent](https://github.com/mcavage/node-ssh-agent) and [ssh-crypt.bash](https://gist.github.com/wmertens/c4f2c4186c04dc5442bbe3396f2c12f6)
 
 ## ✨ Overview
 
@@ -25,11 +25,12 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 - 🧩 Minimal and portable
 - 🔨 Node library included to decrypt secrets on-the-fly in your code
 - 📦 Safe to store encrypted secrets in Git
+- `node:stream` compatible
 - 👥 Works with existing SSH agent workflows like [1Password](https://developer.1password.com/docs/ssh/agent/) or [Bitwarden](https://bitwarden.com/help/ssh-agent/)
 
 ## ⚠️ Limitations
 
-- We can't use ecdsa/ed25519 keys, they always give different signatures.
+- Can't use ecdsa/ed25519 keys, they always give different signatures
 
 ## 💻 CLI usage
 
@@ -80,6 +81,7 @@ const encrypted = await agent.encrypt(
   identity,
   'not_a_secret_but_a_seed',
   Buffer.from('Lorem ipsum dolor', 'utf8'),
+  'hex',
 )
 console.log('Encrypted data:', encrypted)
 
@@ -87,6 +89,7 @@ const decrypted = await agent.decrypt(
   identity,
   'not_a_secret_but_a_seed',
   encrypted,
+  'hex',
 )
 console.log('Decrypted data:', decrypted.toString('utf8'))
 ```
