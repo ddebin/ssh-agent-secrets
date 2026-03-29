@@ -30,7 +30,7 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 
 ## ⚠️ Limitations
 
-- Can't use ecdsa/ed25519 keys, they always give different signatures
+- Can't use ECDSA keys, they always give different signatures
 
 ## 💻 CLI usage
 

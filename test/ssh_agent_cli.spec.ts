@@ -30,7 +30,7 @@ describe('ssh-crypt cli tests', () => {
   })
   it('should encrypt', () => {
     const output = execSync(
-      `echo 'Lorem ipsum dolor' | npm exec -- tsx src/cli.ts -k key_rsa -s not_a_secret --encryptEncoding hex encrypt`,
+      `echo 'Lorem ipsum dolor' | npm exec -- tsx src/cli.ts -k key_ed25519 -s not_a_secret --encryptEncoding hex encrypt`,
       {
         encoding: 'ascii',
       },
