@@ -48,4 +48,15 @@ describe('ssh-crypt cli tests', () => {
     )
     chai.assert.strictEqual(output, 'Lorem ipsum dolor')
   })
+  it('should exit with error', () => {
+    const data =
+      'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f50'
+    chai
+      .expect(() =>
+        execSync(
+          `echo '${data}' | npm exec -- tsx src/cli.ts -k key_rsa -s wrong_secret --decryptEncoding hex decrypt`,
+        ),
+      )
+      .to.throw(/bad secret or key, can't decrypt/iu)
+  })
 })

@@ -88,7 +88,7 @@ describe('SSHAgentClient tests', () => {
       'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f50'
     return chai
       .expect(agent.decrypt(identity, 'wrong_secret', data))
-      .to.be.rejectedWith(Error, "Bad secret or key, can't decrypt")
+      .to.be.rejectedWith(Error, /bad decrypt/iu)
   })
   it('should throw if corrupted encrypted data', async () => {
     const agent = new SSHAgentClient()
