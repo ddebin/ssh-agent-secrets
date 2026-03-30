@@ -74,13 +74,13 @@ export class SSHAgentClient {
 
   /**
    * @param options - Optional configuration.
-   * @throws {Error} if SSH_AUTH_SOCK is not set.
+   * @throws {Error} if SSH_AUTH_SOCK is not set or socket not found.
    */
   constructor(options: SSHAgentClientOptions = {}) {
     /** Socket operation timeout in milliseconds (default: 10000) */
     this.timeout = options.timeout ?? 10000
 
-    /** Encryption and algo key length must match */
+    /** Digest and cipher key length must match */
     this.cipherAlgo = options.cipherAlgo ?? 'aes-256-cbc'
     this.digestAlgo = options.digestAlgo ?? 'sha256'
 
@@ -180,6 +180,12 @@ export class SSHAgentClient {
     return this.request(buildRequest, parseResponse, Protocol.SSH2_AGENT_SIGN_RESPONSE)
   }
 
+  /**
+   * Encrypt data with given `SSHKey` and `seed` string, using SSH signature as the encryption key.
+   *
+   * Resolves with a string containing the IV and encrypted data, encoded in `outputEncoding` (default: "hex").
+   * The IV is needed for decryption and is included in the output as a prefix to the encrypted data.
+   */
   async encrypt(
     key: SSHKey,
     seed: string,
@@ -192,6 +198,13 @@ export class SSHAgentClient {
     )
   }
 
+  /**
+   * Get a Transform stream that encrypts data with given `SSHKey` and `seed` string, using SSH signature as
+   * the encryption key.
+   *
+   * The Transform stream outputs plain binary or a string encoded in `outputEncoding`.
+   * The IV is needed for decryption and is included in the output as a prefix to the encrypted data.
+   */
   async getEncryptTransform(
     key: SSHKey,
     seed: string,
@@ -206,6 +219,12 @@ export class SSHAgentClient {
     })
   }
 
+  /**
+   * Decrypt data with given `SSHKey` and `seed` string, using SSH signature as the decryption key.
+   *
+   * Resolves with a Buffer containing the decrypted data.
+   * The IV is needed for decryption and should be included in the input as a prefix to the encrypted data.
+   */
   async decrypt(
     key: SSHKey,
     seed: string,
@@ -223,6 +242,14 @@ export class SSHAgentClient {
     })
   }
 
+  /**
+   * Get a Transform stream that decrypts data with given `SSHKey` and `seed` string, using SSH signature as
+   * the decryption key.
+   *
+   * The Transform stream expects encrypted data (as plain binary or a string encoded in `inputEncoding`) and
+   * outputs a Buffer containing the decrypted data.
+   * The IV is needed for decryption and should be included in the input as a prefix to the encrypted data.
+   */
   async getDecryptTransform(
     key: SSHKey,
     seed: string,
@@ -252,14 +279,17 @@ export class SSHAgentClient {
     return this.sign(key, Buffer.from(seed, 'utf8')).then(signature => {
       const cipherInfo = crypto.getCipherInfo(this.cipherAlgo)
       if (!cipherInfo?.ivLength) {
-        throw new Error('Wrong cipher algo')
+        throw new Error('Unknown symmetric cipher algo')
       }
-      const hash = crypto.createHash(this.digestAlgo).update(signature.raw).digest()
-      if (hash.length < cipherInfo.keyLength) {
-        throw new Error("Digest algo doesn't match cipher key length")
+      if (!crypto.getHashes().includes(this.digestAlgo)) {
+        throw new Error('Unknown digest algo')
+      }
+      const digest = crypto.createHash(this.digestAlgo).update(signature.raw).digest()
+      if (digest.length < cipherInfo.keyLength) {
+        throw new Error("Digest length doesn't match cipher key length")
       }
       return {
-        cipherKey: crypto.createSecretKey(hash.subarray(0, cipherInfo.keyLength)),
+        cipherKey: crypto.createSecretKey(digest.subarray(0, cipherInfo.keyLength)),
         ivLength: cipherInfo.ivLength,
       }
     })
