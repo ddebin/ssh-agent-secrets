@@ -102,7 +102,7 @@ describe('SSHAgentClient tests', () => {
       .expect(agent.decrypt(identity, SEED, data))
       .to.be.rejectedWith(Error, 'error:1C80006B:Provider routines::wrong final block length')
   })
-  it('should throw if unknown cipher', async () => {
+  it('should throw if cipher algorithm is unknown', async () => {
     const agent = new SSHAgentClient({ cipherAlgo: 'xxx' })
     const identity = await agent.getIdentity('key_rsa')
     if (!identity) {
@@ -110,7 +110,7 @@ describe('SSHAgentClient tests', () => {
     }
     return chai
       .expect(agent.encrypt(identity, SEED, DECODED_STRING_BUFFER))
-      .to.be.rejectedWith(Error, 'Wrong cipher algo')
+      .to.be.rejectedWith(Error, 'Unknown symmetric cipher algo')
   })
   it('should throw if digest length is less than cipher key length', async () => {
     const agent = new SSHAgentClient({ cipherAlgo: 'aes-192-cbc', digestAlgo: 'sha1' })
@@ -120,7 +120,17 @@ describe('SSHAgentClient tests', () => {
     }
     return chai
       .expect(agent.encrypt(identity, SEED, DECODED_STRING_BUFFER))
-      .to.be.rejectedWith(Error, "Digest algo doesn't match cipher key length")
+      .to.be.rejectedWith(Error, "Digest length doesn't match cipher key length")
+  })
+  it('should throw if hash algorithm is unknown', async () => {
+    const agent = new SSHAgentClient({ digestAlgo: 'xxx' })
+    const identity = await agent.getIdentity('key_rsa')
+    if (!identity) {
+      throw new Error()
+    }
+    return chai
+      .expect(agent.encrypt(identity, SEED, DECODED_STRING_BUFFER))
+      .to.be.rejectedWith(Error, 'Unknown digest algo')
   })
 })
 
