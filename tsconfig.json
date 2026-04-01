@@ -1,6 +1,6 @@
 {
   "$schema": "https://www.schemastore.org/tsconfig",
-  "extends": ["@tsconfig/node16/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
+  "extends": ["@tsconfig/node18/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
   "compilerOptions": {
     "outDir": "dist",
     "forceConsistentCasingInFileNames": true,
