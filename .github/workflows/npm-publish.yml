@@ -15,17 +15,12 @@ jobs:
       id-token: write # Required for OIDC
       contents: read
     steps:
-      - uses: actions/checkout@v6
-      - uses: webfactory/ssh-agent@v0.10.0
-        with:
-          ssh-private-key: |
-            ${{ secrets.RSA_KEY }}
-            ${{ secrets.ECDSA_KEY }}
-            ${{ secrets.ED25519_KEY }}
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org/
       - run: npm install
-      - run: npm run test
+      - run: npm run lint
+      - run: npm run build
       - run: npm publish --provenance --access public
