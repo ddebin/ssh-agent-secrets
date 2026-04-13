@@ -26,12 +26,13 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 - 🔨 Node library included to decrypt secrets on-the-fly in your code
 - 📦 Safe to store encrypted secrets in Git
 - `node:stream` compatible
+- `sign` message / `verify` signature
 - 👥 Works with existing SSH agent workflows like [1Password](https://developer.1password.com/docs/ssh/agent/) or [Bitwarden](https://bitwarden.com/help/ssh-agent/)
 
 ## ⚠️ Limitations
 
 - Can't use ECDSA keys, they always give different signatures
-- [RFC8332](https://www.rfc-editor.org/info/rfc8332) compatible agent (e.g. OpenSSH 7.6+) mandatory to use SHA2-512 signature scheme. You can still use deprecated SHA1 signatures with `rsaSignatureFlag: 0` option in `SSHAgentClient` constructor.
+- [RFC8332](https://www.rfc-editor.org/info/rfc8332) compatible agent (e.g. OpenSSH 7.6+) mandatory to use SHA2-512 signature scheme. You can still use deprecated SHA1 signatures with `rsaSignatureFlag:0` option in `SSHAgentClient` constructor.
 
 ## 💻 CLI usage
 

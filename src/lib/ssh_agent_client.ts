@@ -1,4 +1,5 @@
 import * as crypto from 'node:crypto'
+import { parseSSHPublicKey, parseSSHSignature, readString, writeHeader, writeString } from './parse_utils.ts'
 import { createConnection } from 'node:net'
 import { DecryptTransform } from './decrypt_transform.ts'
 import { EncryptTransform } from './encrypt_transform.ts'
@@ -50,30 +51,6 @@ export interface SSHAgentClientOptions {
   digestAlgo?: string
   /** RSA signature method flag for signing request when using RSA keys */
   rsaSignatureFlag?: RsaSignatureFlag
-}
-
-/** Read a length-prefixed string (uint32 BE length + bytes) from a buffer. */
-const readString = function readString(buffer: Buffer, offset: number): Buffer {
-  const len = buffer.readUInt32BE(offset)
-  return buffer.subarray(offset + 4, offset + 4 + len)
-}
-
-/** Write a length-prefixed string into `target` at `offset`, return next offset. */
-const writeString = function writeString(target: Buffer, src: Buffer, offset: number): number {
-  target.writeUInt32BE(src.length, offset)
-  src.copy(target, offset + 4)
-  return offset + 4 + src.length
-}
-
-/**
- * Write the 5-byte SSH agent frame header (4-byte length + 1-byte tag)
- * into `request` and return the next write offset (5).
- * The length field is the total buffer length minus the 4-byte length field itself.
- */
-const writeHeader = function writeHeader(request: Buffer, tag: number): number {
-  request.writeUInt32BE(request.length - 4, 0)
-  request.writeUInt8(tag, 4)
-  return 5
 }
 
 export class SSHAgentClient {
@@ -191,6 +168,23 @@ export class SSHAgentClient {
     }
 
     return this.request(buildRequest, parseResponse, Protocol.SSH2_AGENT_SIGN_RESPONSE)
+  }
+
+  /**
+   * Verify an SSH signature against a message and public key.
+   *
+   * No SSH agent communication is required — this is a local crypto operation.
+   *
+   * @param signature - The signature to verify (from {@link sign}).
+   * @param key - The SSH public key (from {@link getIdentities} or {@link getIdentity}).
+   * @param data - The original message that was signed.
+   * @returns `true` if the signature is valid, `false` otherwise.
+   * @throws {Error} if the key type or signature type is unsupported.
+   */
+  static verify(signature: SSHSignature, key: SSHKey, data: Buffer): boolean {
+    const publicKey = parseSSHPublicKey(key)
+    const { algorithm, raw } = parseSSHSignature(signature)
+    return crypto.verify(algorithm, data, publicKey, raw)
   }
 
   /**

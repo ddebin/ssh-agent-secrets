@@ -7,6 +7,7 @@ chai.use(chaiAsPromised)
 
 const DECODED_STRING = 'Lorem ipsum dolor'
 const DECODED_STRING_BUFFER = Buffer.from(DECODED_STRING, 'utf8')
+const DATA = Buffer.from('hello', 'utf8')
 const SEED = 'not_a_secret'
 
 describe('SSHAgentClient tests', () => {
@@ -31,7 +32,7 @@ describe('SSHAgentClient tests', () => {
   it('should find identites', async () => {
     const agent = new SSHAgentClient()
     const identities = await agent.getIdentities()
-    chai.assert.strictEqual(identities.length, 3)
+    chai.assert.strictEqual(identities.length, 5)
     const identity = identities.find(id => id.type === 'ssh-rsa')
     if (!identity) {
       throw new Error()
@@ -49,12 +50,12 @@ describe('SSHAgentClient tests', () => {
   })
   it('should find identity with selector in comment', async () => {
     const agent = new SSHAgentClient()
-    const identity = await agent.getIdentity('key_ecdsa')
+    const identity = await agent.getIdentity('key_ecdsa_256')
     if (!identity) {
       throw new Error()
     }
     chai.assert.strictEqual(identity.type, 'ecdsa-sha2-nistp256')
-    chai.assert.strictEqual(identity.comment, 'key_ecdsa')
+    chai.assert.strictEqual(identity.comment, 'key_ecdsa_256')
   })
   it('should find identity with selector in pubkey', async () => {
     const agent = new SSHAgentClient()
@@ -71,7 +72,7 @@ describe('SSHAgentClient tests', () => {
     if (!identity) {
       throw new Error()
     }
-    const signature = await agent.sign(identity, Buffer.from('hello', 'utf8'))
+    const signature = await agent.sign(identity, DATA)
     chai.assert.strictEqual(signature.type, 'ssh-rsa')
     chai.assert.strictEqual(
       signature.signature,
@@ -84,7 +85,7 @@ describe('SSHAgentClient tests', () => {
     if (!identity) {
       throw new Error()
     }
-    const signature = await agent.sign(identity, Buffer.from('hello', 'utf8'))
+    const signature = await agent.sign(identity, DATA)
     chai.assert.strictEqual(signature.type, 'rsa-sha2-256')
     chai.assert.strictEqual(
       signature.signature,

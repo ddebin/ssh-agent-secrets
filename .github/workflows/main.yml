@@ -19,7 +19,9 @@ jobs:
         with:
           ssh-private-key: |
             ${{ secrets.RSA_KEY }}
-            ${{ secrets.ECDSA_KEY }}
+            ${{ secrets.ECDSA_256_KEY }}
+            ${{ secrets.ECDSA_384_KEY }}
+            ${{ secrets.ECDSA_521_KEY }}
             ${{ secrets.ED25519_KEY }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
