@@ -151,7 +151,7 @@ export class SSHAgentClient {
       let offset = writeHeader(req, Protocol.SSH2_AGENTC_SIGN_REQUEST)
       offset = writeString(req, key.raw, offset)
       offset = writeString(req, data, offset)
-      req.writeUInt32BE(this.rsaSignatureFlag, offset)
+      req.writeUInt32BE(key.type === 'ssh-rsa' ? this.rsaSignatureFlag : 0, offset)
       return req
     }
 
