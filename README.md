@@ -31,6 +31,7 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 ## ⚠️ Limitations
 
 - Can't use ECDSA keys, they always give different signatures
+- [RFC8332](https://www.rfc-editor.org/info/rfc8332) compatible agent (e.g. OpenSSH 7.6+) mandatory to use SHA2-512 signature scheme. You can still use deprecated SHA1 signatures with `rsaSignatureFlag: 0` option in `SSHAgentClient` constructor.
 
 ## 💻 CLI usage
 
@@ -92,4 +93,11 @@ const decrypted = await agent.decrypt(
   'hex',
 )
 console.log('Decrypted data:', decrypted.toString('utf8'))
+```
+
+## Local test
+
+```bash
+ssh-agent -D
+SSH_AUTH_SOCK= ssh-add id_ecdsa id_ed25519 id_rsa
 ```

@@ -15,6 +15,14 @@ const Protocol = {
 
 type Protocol = (typeof Protocol)[keyof typeof Protocol]
 
+export const RsaSignatureFlag = {
+  DEFAULT: 0,
+  SSH_AGENT_RSA_SHA2_256: 2,
+  SSH_AGENT_RSA_SHA2_512: 4,
+} as const
+
+type RsaSignatureFlag = (typeof RsaSignatureFlag)[keyof typeof RsaSignatureFlag]
+
 export interface SSHKey {
   /** E.g. "ssh-rsa" */
   type: string
@@ -40,6 +48,8 @@ export interface SSHAgentClientOptions {
   sockFile?: string
   cipherAlgo?: string
   digestAlgo?: string
+  /** RSA signature method flag for signing request when using RSA keys */
+  rsaSignatureFlag?: RsaSignatureFlag
 }
 
 /** Read a length-prefixed string (uint32 BE length + bytes) from a buffer. */
@@ -71,6 +81,7 @@ export class SSHAgentClient {
   private readonly sockFile: string
   private readonly cipherAlgo: string
   private readonly digestAlgo: string
+  private readonly rsaSignatureFlag: RsaSignatureFlag
 
   /**
    * @param options - Optional configuration.
@@ -83,6 +94,8 @@ export class SSHAgentClient {
     /** Digest and cipher key length must match */
     this.cipherAlgo = options.cipherAlgo ?? 'aes-256-cbc'
     this.digestAlgo = options.digestAlgo ?? 'sha256'
+
+    this.rsaSignatureFlag = options.rsaSignatureFlag ?? RsaSignatureFlag.SSH_AGENT_RSA_SHA2_512
 
     const sockFile = options.sockFile ?? process.env.SSH_AUTH_SOCK
     if (!sockFile || !existsSync(sockFile)) {
@@ -161,7 +174,7 @@ export class SSHAgentClient {
       let offset = writeHeader(req, Protocol.SSH2_AGENTC_SIGN_REQUEST)
       offset = writeString(req, key.raw, offset)
       offset = writeString(req, data, offset)
-      req.writeUInt32BE(0, offset) // Flags = 0
+      req.writeUInt32BE(this.rsaSignatureFlag, offset)
       return req
     }
 

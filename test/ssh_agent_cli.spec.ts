@@ -42,9 +42,9 @@ describe('ssh-crypt cli tests', () => {
   })
   it('should decrypt', () => {
     const data =
-      'ecfd6bb57f4891ba7226886e90d2eb848022a495b15ffd91ffe760bca5605f9062c305ee14226d9daf7faa58460c8f50'
+      '5f1979820d75926171e7028d5938f64ba5872683334f21b14947df1a4cce1f9ff1bb7c9c91e28e49aa8807b02c18c48c'
     const output = execSync(
-      'npm exec -- tsx src/cli.ts -k key_rsa -s not_a_secret --decryptEncoding hex decrypt',
+      'npm exec -- tsx src/cli.ts -k key_ed25519 -s not_a_secret --decryptEncoding hex decrypt',
       {
         encoding: 'utf8',
         input: data,
