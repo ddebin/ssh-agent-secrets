@@ -30,7 +30,7 @@ describe('SSH key type tests', () => {
   })
   it("doesn't give the same signature twice with an ECDSA key", async () => {
     const agent = new SSHAgentClient()
-    const identity = await agent.getIdentity('key_ecdsa')
+    const identity = await agent.getIdentity('key_ecdsa_256')
     if (!identity) {
       throw new Error()
     }
@@ -41,7 +41,7 @@ describe('SSH key type tests', () => {
   })
   it('should throw if using ECDSA key for encrypting', async () => {
     const agent = new SSHAgentClient()
-    const identity = await agent.getIdentity('key_ecdsa')
+    const identity = await agent.getIdentity('key_ecdsa_256')
     if (!identity) {
       throw new Error()
     }
@@ -54,7 +54,7 @@ describe('SSH key type tests', () => {
   })
   it('should throw if using ECDSA key for decrypting', async () => {
     const agent = new SSHAgentClient()
-    const identity = await agent.getIdentity('key_ecdsa')
+    const identity = await agent.getIdentity('key_ecdsa_256')
     if (!identity) {
       throw new Error()
     }
