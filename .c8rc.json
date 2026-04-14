@@ -1,0 +1,8 @@
+{
+  "src": ["src/lib"],
+  "include": ["dist/src/lib/**/*.js"],
+  "exclude": ["dist/src/lib/index.js"],
+  "extension": [".js"],
+  "reporter": ["lcovonly", "text"],
+  "all": true
+}

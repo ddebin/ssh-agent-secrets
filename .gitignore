@@ -1,9 +1,8 @@
 .vscode
-.idea
 node_modules/
 dist/
 mise.toml
 /*.tgz
-/.nyc_output
+/test-results.xml
 /coverage
 *.local.*

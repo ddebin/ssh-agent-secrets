@@ -1,10 +1,11 @@
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import globals from 'globals'
-import { defineConfig } from 'eslint/config'
+import { defineConfig, globalIgnores } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier/flat'
 
 export default defineConfig([
+  globalIgnores(['dist/**/*.{js,ts}']),
   {
     files: ['src/**/*.ts', 'test/**/*.ts'],
     extends: [
@@ -17,7 +18,6 @@ export default defineConfig([
       reportUnusedDisableDirectives: 'error',
     },
     languageOptions: {
-      ecmaVersion: 2020,
       globals: globals.node,
       parserOptions: {
         project: ['./tsconfig.json'],

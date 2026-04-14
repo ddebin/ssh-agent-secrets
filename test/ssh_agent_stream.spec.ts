@@ -1,5 +1,4 @@
 import * as chai from 'chai'
-import { describe, it } from 'mocha'
 import chaiAsPromised from 'chai-as-promised'
 import { Readable } from 'stream'
 import { SSHAgentClient } from '../src/lib/ssh_agent_client.ts'
