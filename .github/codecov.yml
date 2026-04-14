@@ -1,4 +1,0 @@
-codecov:
-  parsers:
-    lcov:
-      partials_as_hits: true
