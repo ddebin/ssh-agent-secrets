@@ -6,5 +6,4 @@ mise.toml
 /*.tgz
 /.nyc_output
 /coverage
-id_*
 *.local.*

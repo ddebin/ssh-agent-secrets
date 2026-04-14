@@ -32,7 +32,7 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 ## ⚠️ Limitations
 
 - Can't use ECDSA keys, they always give different signatures
-- [RFC8332](https://www.rfc-editor.org/info/rfc8332) compatible agent (e.g. OpenSSH 7.6+) mandatory to use SHA2-512 signature scheme. You can still use deprecated SHA1 signatures with `rsaSignatureFlag:0` option in `SSHAgentClient` constructor.
+- [RFC8332](https://www.rfc-editor.org/info/rfc8332) compatible agent (e.g. OpenSSH 7.6+) is mandatory to use SHA2-512 signature scheme. You can still use deprecated SHA1 signatures with `rsaSignatureFlag:0` option in `SSHAgentClient` constructor.
 
 ## 💻 CLI usage
 
@@ -67,7 +67,7 @@ Options:
 npm i ssh-agent-secrets
 ```
 
-### Sample
+### [Sample](/example/test.js)
 
 ```javascript
 import { SSHAgentClient } from 'ssh-agent-secrets'
@@ -77,7 +77,7 @@ const agent = new SSHAgentClient()
 const identities = await agent.getIdentities()
 console.log(identities)
 
-const identity = await agent.getIdentity('AWS')
+const identity = await agent.getIdentity('ED25519')
 
 const encrypted = await agent.encrypt(
   identity,
@@ -96,9 +96,10 @@ const decrypted = await agent.decrypt(
 console.log('Decrypted data:', decrypted.toString('utf8'))
 ```
 
-## Local test
+### Local test
 
 ```bash
 ssh-agent -D
-SSH_AUTH_SOCK= ssh-add id_ecdsa id_ed25519 id_rsa
+SSH_AUTH_SOCK="[...]" ssh-add test/ssh_keys/*
+SSH_AUTH_SOCK="[...]" npm run test
 ```

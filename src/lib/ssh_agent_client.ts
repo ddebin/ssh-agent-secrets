@@ -72,6 +72,7 @@ export class SSHAgentClient {
     this.cipherAlgo = options.cipherAlgo ?? 'aes-256-cbc'
     this.digestAlgo = options.digestAlgo ?? 'sha256'
 
+    /** Default to SHA2-512 signature when using RSA keys */
     this.rsaSignatureFlag = options.rsaSignatureFlag ?? RsaSignatureFlag.SSH_AGENT_RSA_SHA2_512
 
     const sockFile = options.sockFile ?? process.env.SSH_AUTH_SOCK

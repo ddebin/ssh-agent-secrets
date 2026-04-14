@@ -2,13 +2,13 @@ import * as crypto from 'crypto'
 import { type SSHKey, type SSHSignature } from './ssh_agent_client.ts'
 
 /** Read a length-prefixed string (uint32 BE length + bytes) from a buffer. */
-const readString = function readString(buffer: Buffer, offset: number): Buffer {
+const readString = (buffer: Buffer, offset: number): Buffer => {
   const len = buffer.readUInt32BE(offset)
   return buffer.subarray(offset + 4, offset + 4 + len)
 }
 
 /** Write a length-prefixed string into `target` at `offset`, return next offset. */
-const writeString = function writeString(target: Buffer, src: Buffer, offset: number): number {
+const writeString = (target: Buffer, src: Buffer, offset: number): number => {
   target.writeUInt32BE(src.length, offset)
   src.copy(target, offset + 4)
   return offset + 4 + src.length
@@ -19,7 +19,7 @@ const writeString = function writeString(target: Buffer, src: Buffer, offset: nu
  * into `request` and return the next write offset (5).
  * The length field is the total buffer length minus the 4-byte length field itself.
  */
-const writeHeader = function writeHeader(request: Buffer, tag: number): number {
+const writeHeader = (request: Buffer, tag: number): number => {
   request.writeUInt32BE(request.length - 4, 0)
   request.writeUInt8(tag, 4)
   return 5
