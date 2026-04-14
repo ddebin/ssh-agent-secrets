@@ -8,12 +8,14 @@
       "commander": ["./src/type/commander.d.ts"]
     },
     "lib": ["es2021", "es2022.error"],
-    "types": ["node"],
+    "types": ["node", "mocha"],
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
     "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "strict": true,
     "sourceMap": true,
     "declaration": true
   },

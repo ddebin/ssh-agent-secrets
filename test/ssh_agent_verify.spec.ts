@@ -1,5 +1,4 @@
 import * as chai from 'chai'
-import { describe, it } from 'mocha'
 import {
   RsaSignatureFlag,
   SSHAgentClient,

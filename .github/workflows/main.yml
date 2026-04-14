@@ -9,6 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
+      checks: write
       contents: read
     strategy:
       matrix:
@@ -29,10 +30,26 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install
       - run: npm run lint
-      - run: npm run build
-      - run: node ./dist/src/cli.js --help
       - run: npm run coverage
+      - run: node ./dist/src/cli.js --help
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v6
+        if: ${{ !cancelled() && matrix.node-version == 'latest' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: coverage
+          files: ./coverage/lcov.info
+          disable_search: true
+      - name: Upload test results to Codecov
+        uses: codecov/codecov-action@v6
+        if: ${{ !cancelled() && matrix.node-version == 'latest' }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
+          files: ./test-results.xml
+          disable_search: true
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v6
+        if: ${{ (success() || failure()) && matrix.node-version == 'latest'  }}
+        with:
+          report_paths: ./test-results.xml

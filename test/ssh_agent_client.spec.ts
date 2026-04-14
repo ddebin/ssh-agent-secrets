@@ -1,5 +1,4 @@
 import * as chai from 'chai'
-import { describe, it } from 'mocha'
 import { RsaSignatureFlag, SSHAgentClient } from '../src/lib/ssh_agent_client.ts'
 import chaiAsPromised from 'chai-as-promised'
 
