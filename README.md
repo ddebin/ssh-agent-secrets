@@ -1,7 +1,6 @@
 # ssh-agent-secrets
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ddebin/ssh-agent-secrets/main.yml)](https://github.com/ddebin/ssh-agent-secrets/actions)
-[![Codecov](https://img.shields.io/codecov/c/github/ddebin/ssh-agent-secrets)](https://app.codecov.io/gh/ddebin/ssh-agent-secrets)
 [![NPM](https://img.shields.io/npm/v/ssh-agent-secrets)](https://www.npmjs.com/package/ssh-agent-secrets)
 [![License](https://img.shields.io/github/license/ddebin/ssh-agent-secrets)](./LICENSE)
 
