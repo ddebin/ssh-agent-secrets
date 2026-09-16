@@ -27,7 +27,7 @@ A seed is used to generate the secret, it's recommended you don't use the same s
 - 📦 Safe to store encrypted secrets in Git
 - `node:stream` compatible
 - `sign` message / `verify` signature
-- 👥 Works with existing SSH agent workflows like [1Password](https://developer.1password.com/docs/ssh/agent/) or [Bitwarden](https://bitwarden.com/help/ssh-agent/)
+- 👥 Works with existing SSH agent workflows like [1Password](https://developer.1password.com/docs/ssh/agent/), [ProtonPass](https://protonpass.github.io/pass-cli/commands/ssh-agent/) or [Bitwarden](https://bitwarden.com/help/ssh-agent/)
 
 ## ⚠️ Limitations
 
@@ -98,8 +98,11 @@ console.log('Decrypted data:', decrypted.toString('utf8'))
 
 ### Local test
 
+Tests need a running `ssh-agent` with the test keys from [`test/ssh_keys`](/test/ssh_keys) loaded:
+
 ```bash
-ssh-agent -D
-SSH_AUTH_SOCK="[...]" ssh-add test/ssh_keys/*
-SSH_AUTH_SOCK="[...]" npm run test
+eval "$(ssh-agent -s)"
+ssh-add test/ssh_keys/*
+npm run test
+ssh-agent -k
 ```

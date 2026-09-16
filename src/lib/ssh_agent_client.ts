@@ -1,4 +1,15 @@
-import * as crypto from 'node:crypto'
+import {
+  type Cipher,
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  createSecretKey,
+  getCipherInfo,
+  getHashes,
+  type KeyObject,
+  randomBytes,
+  verify,
+} from 'node:crypto'
 import { parseSSHPublicKey, parseSSHSignature, readString, writeHeader, writeString } from './parse_utils.ts'
 import { createConnection } from 'node:net'
 import { DecryptTransform } from './decrypt_transform.ts'
@@ -185,7 +196,7 @@ export class SSHAgentClient {
   static verify(signature: SSHSignature, key: SSHKey, data: Buffer): boolean {
     const publicKey = parseSSHPublicKey(key)
     const { algorithm, raw } = parseSSHSignature(signature)
-    return crypto.verify(algorithm, data, publicKey, raw)
+    return verify(algorithm, data, publicKey, raw)
   }
 
   /**
@@ -245,7 +256,7 @@ export class SSHAgentClient {
       const buffer = Buffer.from(data, inputEncoding)
       const iv = buffer.subarray(0, ivLength)
       const encrypted = buffer.subarray(ivLength)
-      const decipher = crypto.createDecipheriv(this.cipherAlgo, cipherKey, iv)
+      const decipher = createDecipheriv(this.cipherAlgo, cipherKey, iv)
       return Buffer.concat([decipher.update(encrypted), decipher.final()])
     })
   }
@@ -268,36 +279,33 @@ export class SSHAgentClient {
     )
   }
 
-  private async getCipherIV(key: SSHKey, seed: string): Promise<{ cipher: crypto.Cipher; iv: Buffer }> {
+  private async getCipherIV(key: SSHKey, seed: string): Promise<{ cipher: Cipher; iv: Buffer }> {
     return this.getCipherKey(key, seed).then(({ cipherKey, ivLength }) => {
-      const iv = crypto.randomBytes(ivLength)
-      const cipher = crypto.createCipheriv(this.cipherAlgo, cipherKey, iv)
+      const iv = randomBytes(ivLength)
+      const cipher = createCipheriv(this.cipherAlgo, cipherKey, iv)
       return { cipher, iv }
     })
   }
 
-  private async getCipherKey(
-    key: SSHKey,
-    seed: string,
-  ): Promise<{ cipherKey: crypto.KeyObject; ivLength: number }> {
+  private async getCipherKey(key: SSHKey, seed: string): Promise<{ cipherKey: KeyObject; ivLength: number }> {
     if (/ecdsa/iu.test(key.type)) {
       throw new Error(`${key.type} key is forbidden, it always gives different signatures!`)
     }
     // Use SSH signature as decryption key
     return this.sign(key, Buffer.from(seed, 'utf8')).then(signature => {
-      const cipherInfo = crypto.getCipherInfo(this.cipherAlgo)
+      const cipherInfo = getCipherInfo(this.cipherAlgo)
       if (!cipherInfo?.ivLength) {
         throw new Error('Unknown symmetric cipher algo')
       }
-      if (!crypto.getHashes().includes(this.digestAlgo)) {
+      if (!getHashes().includes(this.digestAlgo)) {
         throw new Error('Unknown digest algo')
       }
-      const digest = crypto.createHash(this.digestAlgo).update(signature.raw).digest()
+      const digest = createHash(this.digestAlgo).update(signature.raw).digest()
       if (digest.length < cipherInfo.keyLength) {
         throw new Error("Digest length doesn't match cipher key length")
       }
       return {
-        cipherKey: crypto.createSecretKey(digest.subarray(0, cipherInfo.keyLength)),
+        cipherKey: createSecretKey(digest.subarray(0, cipherInfo.keyLength)),
         ivLength: cipherInfo.ivLength,
       }
     })
@@ -343,7 +351,7 @@ export class SSHAgentClient {
         try {
           resolve(parseResponse(data.subarray(5)))
         } catch (err) {
-          reject(err as Error)
+          reject(new Error(`InvalidProtocolError: ${String(err)}`))
         }
       })
 

@@ -1,4 +1,5 @@
 {
+  "require": ["tsx"],
   "extension": ["js", "ts"],
   "reporter": "spec"
 }

@@ -1,16 +1,16 @@
-import * as crypto from 'node:crypto'
+import { createDecipheriv, type Decipher, type KeyObject } from 'node:crypto'
 import { Transform, type TransformCallback, type TransformOptions } from 'node:stream'
 
 export class DecryptTransform extends Transform {
-  private decipher?: crypto.Decipher
+  private decipher?: Decipher
   private algo: string
-  private cipherKey: crypto.KeyObject
+  private cipherKey: KeyObject
   private ivLength: number
   private inputEncoding?: BufferEncoding
 
   constructor(
     algo: string,
-    cipherKey: crypto.KeyObject,
+    cipherKey: KeyObject,
     ivLength: number,
     inputEncoding?: BufferEncoding,
     opts?: TransformOptions,
@@ -31,7 +31,7 @@ export class DecryptTransform extends Transform {
       // Unpackage the combined iv + encrypted message.
       // Since we are using a fixed size IV, we can hard code the slice length.
       const iv = data.subarray(0, this.ivLength)
-      this.decipher = crypto.createDecipheriv(this.algo, this.cipherKey, iv)
+      this.decipher = createDecipheriv(this.algo, this.cipherKey, iv)
       data = data.subarray(this.ivLength)
     }
     this.push(this.decipher.update(data))

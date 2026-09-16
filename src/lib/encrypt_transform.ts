@@ -1,12 +1,12 @@
-import * as crypto from 'node:crypto'
 import { Transform, type TransformCallback, type TransformOptions } from 'node:stream'
+import { type Cipher } from 'node:crypto'
 
 export class EncryptTransform extends Transform {
   private iv: Buffer
-  private cipher: crypto.Cipher
+  private cipher: Cipher
   private ivSent = false
 
-  constructor(cipher: crypto.Cipher, iv: Buffer, opts?: TransformOptions) {
+  constructor(cipher: Cipher, iv: Buffer, opts?: TransformOptions) {
     super(opts)
     this.iv = iv
     this.cipher = cipher

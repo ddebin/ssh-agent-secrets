@@ -1,4 +1,4 @@
-import * as crypto from 'crypto'
+import { createPublicKey, type KeyObject } from 'node:crypto'
 import { type SSHKey, type SSHSignature } from './ssh_agent_client.ts'
 
 /** Read a length-prefixed string (uint32 BE length + bytes) from a buffer. */
@@ -39,8 +39,8 @@ const ecdsaHashAlgo = (sigType: string): string => {
   throw new Error(`Unsupported ECDSA signature type: ${sigType}`)
 }
 
-/** Convert an SSH public key blob to a Node.js `crypto.KeyObject`. */
-const parseSSHPublicKey = (key: SSHKey): crypto.KeyObject => {
+/** Convert an SSH public key blob to a Node.js `KeyObject`. */
+const parseSSHPublicKey = (key: SSHKey): KeyObject => {
   const blob = key.raw
   const type = readString(blob, 0)
   const keyType = type.toString('ascii')
@@ -49,7 +49,7 @@ const parseSSHPublicKey = (key: SSHKey): crypto.KeyObject => {
     const rsaOffset = 4 + type.length
     const exponent = readString(blob, rsaOffset)
     const modulus = readString(blob, rsaOffset + 4 + exponent.length)
-    return crypto.createPublicKey({
+    return createPublicKey({
       // eslint-disable-next-line id-length
       key: { kty: 'RSA', n: modulus.toString('base64url'), e: exponent.toString('base64url') },
       format: 'jwk',
@@ -60,7 +60,7 @@ const parseSSHPublicKey = (key: SSHKey): crypto.KeyObject => {
     const pubKeyBytes = readString(blob, 4 + type.length)
     // SPKI DER encoding for Ed25519 (OID 1.3.101.112)
     const spkiPrefix = Buffer.from('302a300506032b6570032100', 'hex')
-    return crypto.createPublicKey({
+    return createPublicKey({
       key: Buffer.concat([spkiPrefix, pubKeyBytes]),
       format: 'der',
       type: 'spki',
@@ -75,7 +75,7 @@ const parseSSHPublicKey = (key: SSHKey): crypto.KeyObject => {
     // Uncompressed EC point: 0x04 || x || y
     const pointX = point.subarray(1, 1 + coordLen)
     const pointY = point.subarray(1 + coordLen)
-    return crypto.createPublicKey({
+    return createPublicKey({
       // eslint-disable-next-line id-length
       key: { kty: 'EC', crv, x: pointX.toString('base64url'), y: pointY.toString('base64url') },
       format: 'jwk',
