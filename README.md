@@ -1,8 +1,7 @@
 # ssh-agent-secrets
 
-[![CI](https://img.shields.io/github/actions/workflow/status/ddebin/ssh-agent-secrets/main.yml)](https://github.com/ddebin/ssh-agent-secrets/actions)
-[![NPM](https://img.shields.io/npm/v/ssh-agent-secrets)](https://www.npmjs.com/package/ssh-agent-secrets)
-[![License](https://img.shields.io/github/license/ddebin/ssh-agent-secrets)](./LICENSE)
+[![Node.js CI](https://github.com/ddebin/ssh-agent-secrets/workflows/Node.js%20CI/badge.svg)](https://github.com/ddebin/ssh-agent-secrets/actions)
+[![npm version](https://badge.fury.io/js/ssh-agent-secrets.svg)](https://www.npmjs.com/package/ssh-agent-secrets)
 
 > Encrypt and decrypt secrets using your SSH agent — no plaintext, no extra key management.
 
