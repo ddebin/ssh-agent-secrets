@@ -64,7 +64,7 @@
     "globals": "^17",
     "mocha": "^12",
     "prettier": "^3",
-    "prettier-plugin-packagejson": "^3",
+    "prettier-plugin-packagejson": "^2",
     "ts-node": "^10",
     "tsx": "^4",
     "typescript": "^6",
